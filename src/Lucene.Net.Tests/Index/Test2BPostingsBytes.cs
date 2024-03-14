@@ -1,10 +1,8 @@
-﻿using Lucene.Net.Analysis.TokenAttributes;
-using Lucene.Net.Documents;
+﻿using Lucene.Net.Documents;
 using Lucene.Net.Index.Extensions;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
 using NUnit.Framework;
-using System;
 
 namespace Lucene.Net.Index
 {
@@ -134,7 +132,7 @@ namespace Lucene.Net.Index
 
         public sealed class MyTokenStream : TokenStream
         {
-            internal readonly ICharTermAttribute termAtt;
+            private readonly ICharTermAttribute termAtt;
             internal int index;
             internal int n;
 
