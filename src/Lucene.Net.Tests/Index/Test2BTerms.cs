@@ -1,11 +1,11 @@
 ﻿using J2N.Collections.Generic.Extensions;
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.TokenAttributes;
+using Lucene.Net.Codecs;
 using Lucene.Net.Documents;
 using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
@@ -34,8 +34,6 @@ namespace Lucene.Net.Index
      * limitations under the License.
      */
 
-    using Codec = Lucene.Net.Codecs.Codec;
-
     // NOTE: this test will fail w/ PreFlexRW codec!  (Because
     // this test uses full binary term space, but PreFlex cannot
     // handle this since it requires the terms are UTF8 bytes).
@@ -59,12 +57,12 @@ namespace Lucene.Net.Index
 
         private sealed class MyTokenStream : TokenStream
         {
-            internal readonly int tokensPerDoc;
-            internal int tokenCount;
+            private readonly int tokensPerDoc;
+            private int tokenCount;
             public readonly IList<BytesRef> savedTerms = new JCG.List<BytesRef>();
-            internal int nextSave;
-            internal long termCounter;
-            internal readonly Random random;
+            private int nextSave;
+            private long termCounter;
+            private readonly Random random;
 
             public MyTokenStream(Random random, int tokensPerDoc)
                 : base(new MyAttributeFactory(AttributeFactory.DEFAULT_ATTRIBUTE_FACTORY))
@@ -140,7 +138,7 @@ namespace Lucene.Net.Index
 
             private sealed class MyAttributeFactory : AttributeFactory
             {
-                internal readonly AttributeFactory @delegate;
+                private readonly AttributeFactory @delegate;
 
                 public MyAttributeFactory(AttributeFactory @delegate)
                 {
@@ -172,7 +170,7 @@ namespace Lucene.Net.Index
                 throw RuntimeException.Create("this test cannot run with PreFlex codec");
             }
             Console.WriteLine("Starting Test2B");
-            long TERM_COUNT = ((long)int.MaxValue) + 100000000;
+            const long TERM_COUNT = ((long)int.MaxValue) + 100000000;
 
             int TERMS_PER_DOC = TestUtil.NextInt32(Random, 100000, 1000000);
 
@@ -202,7 +200,7 @@ namespace Lucene.Net.Index
                     ((LogByteSizeMergePolicy)mp).MaxMergeMB = 1024 * 1024 * 1024;
                 }
 
-                Documents.Document doc = new Documents.Document();
+                Document doc = new Document();
                 MyTokenStream ts = new MyTokenStream(Random, TERMS_PER_DOC);
 
                 FieldType customType = new FieldType(TextField.TYPE_NOT_STORED);
