@@ -3,7 +3,6 @@ using Lucene.Net.Documents;
 using Lucene.Net.Index.Extensions;
 using Lucene.Net.Store;
 using NUnit.Framework;
-using System;
 using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
@@ -75,7 +74,7 @@ namespace Lucene.Net.Index
             Field field = new Field("field", new MyTokenStream(), ft);
             doc.Add(field);
 
-            int numDocs = (int.MaxValue / 26) + 1;
+            const int numDocs = (int.MaxValue / 26) + 1;
             for (int i = 0; i < numDocs; i++)
             {
                 w.AddDocument(doc);
@@ -91,8 +90,8 @@ namespace Lucene.Net.Index
 
         public sealed class MyTokenStream : TokenStream
         {
-            internal readonly ICharTermAttribute termAtt;
-            internal readonly IPositionIncrementAttribute posIncAtt;
+            private readonly ICharTermAttribute termAtt;
+            private readonly IPositionIncrementAttribute posIncAtt;
             internal int index;
 
             public MyTokenStream()
