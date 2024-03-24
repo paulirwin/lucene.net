@@ -2,6 +2,7 @@
 using Lucene.Net.Store;
 using NUnit.Framework;
 using System;
+using System.Globalization;
 using System.IO;
 using Assert = Lucene.Net.TestFramework.Assert;
 
@@ -229,8 +230,8 @@ namespace Lucene.Net.Index
         public virtual void TestRandomFiles()
         {
             // Setup the test segment
-            string segment = "test";
-            int chunk = 1024; // internal buffer size used by the stream
+            const string segment = "test";
+            const int chunk = 1024; // internal buffer size used by the stream
             CreateRandomFile(dir, segment + ".zero", 0);
             CreateRandomFile(dir, segment + ".one", 1);
             CreateRandomFile(dir, segment + ".ten", 10);
@@ -611,7 +612,7 @@ namespace Lucene.Net.Index
         public virtual void TestLargeWrites()
         {
             IndexOutput os = dir.CreateOutput("testBufferStart.txt", NewIOContext(Random));
-            
+
             var largeBuf = new byte[2048];
             for (int i = 0; i < largeBuf.Length; i++)
             {
@@ -852,7 +853,7 @@ namespace Lucene.Net.Index
             doc.Add(bodyField);
             for (int i = 0; i < 100; i++)
             {
-                idField.SetStringValue(Convert.ToString(i));
+                idField.SetStringValue(Convert.ToString(i, CultureInfo.InvariantCulture));
                 bodyField.SetStringValue(TestUtil.RandomUnicodeString(Random));
                 riw.AddDocument(doc);
                 if (Random.Next(7) == 0)
