@@ -87,7 +87,7 @@ namespace Lucene.Net.Index
 
             ConcurrentQueue<string> postings = new ConcurrentQueue<string>(postingsList);
 
-            Directory dir = NewFSDirectory(CreateTempDir(GetFullMethodName())); // LUCENENET: using GetFullMethodName() instead of "bagofpositions"
+            Directory dir = NewFSDirectory(CreateTempDir("bagofpositions"));
 
             RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
 

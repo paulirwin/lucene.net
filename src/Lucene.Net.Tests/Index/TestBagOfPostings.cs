@@ -1,7 +1,6 @@
 ﻿using J2N.Collections.Generic.Extensions;
 using J2N.Threading;
 using Lucene.Net.Documents;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using System;
 using System.Collections.Concurrent;
@@ -32,7 +31,6 @@ namespace Lucene.Net.Index
      * limitations under the License.
      */
 
-    using BytesRef = Lucene.Net.Util.BytesRef;
     using Directory = Lucene.Net.Store.Directory;
     using Document = Documents.Document;
     using Field = Field;
@@ -102,7 +100,7 @@ namespace Lucene.Net.Index
 
             for (int threadID = 0; threadID < threadCount; threadID++)
             {
-                threads[threadID] = new ThreadAnonymousClass(this, maxTermsPerDoc, postings, iw, startingGun);
+                threads[threadID] = new ThreadAnonymousClass(maxTermsPerDoc, postings, iw, startingGun);
                 threads[threadID].Start();
             }
             startingGun.Signal();
@@ -140,16 +138,13 @@ namespace Lucene.Net.Index
 
         private sealed class ThreadAnonymousClass : ThreadJob
         {
-            private readonly TestBagOfPostings outerInstance;
-
             private readonly int maxTermsPerDoc;
             private readonly ConcurrentQueue<string> postings;
             private readonly RandomIndexWriter iw;
             private readonly CountdownEvent startingGun;
 
-            public ThreadAnonymousClass(TestBagOfPostings outerInstance, int maxTermsPerDoc, ConcurrentQueue<string> postings, RandomIndexWriter iw, CountdownEvent startingGun)
+            public ThreadAnonymousClass(int maxTermsPerDoc, ConcurrentQueue<string> postings, RandomIndexWriter iw, CountdownEvent startingGun)
             {
-                this.outerInstance = outerInstance;
                 this.maxTermsPerDoc = maxTermsPerDoc;
                 this.postings = postings;
                 this.iw = iw;
@@ -164,7 +159,7 @@ namespace Lucene.Net.Index
                     Field field = NewTextField("field", "", Field.Store.NO);
                     document.Add(field);
                     startingGun.Wait();
-                    while (!(postings.Count == 0))
+                    while (!postings.IsEmpty)
                     {
                         StringBuilder text = new StringBuilder();
                         ISet<string> visited = new JCG.HashSet<string>();
