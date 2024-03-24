@@ -469,7 +469,7 @@ namespace Lucene.Net.Index
 
                 for (int i = 0; i < 35; i++)
                 {
-                    int id = Convert.ToInt32(reader.Document(i).Get("id"));
+                    int id = Convert.ToInt32(reader.Document(i).Get("id"), CultureInfo.InvariantCulture);
                     Assert.AreEqual(id, dvByte.Get(i));
 
                     sbyte[] bytes = new sbyte[] {
@@ -532,8 +532,8 @@ namespace Lucene.Net.Index
 
         private int Compare(string name, string v)
         {
-            int v0 = Convert.ToInt32(name.Substring(0, 2));
-            int v1 = Convert.ToInt32(v);
+            int v0 = Convert.ToInt32(name.Substring(0, 2), CultureInfo.InvariantCulture);
+            int v1 = Convert.ToInt32(v, CultureInfo.InvariantCulture);
             return v0 - v1;
         }
 
@@ -826,12 +826,12 @@ namespace Lucene.Net.Index
 
                 for (int id = 10; id < 15; id++)
                 {
-                    ScoreDoc[] hits = searcher.Search(NumericRangeQuery.NewInt32Range("trieInt", 4, Convert.ToInt32(id), Convert.ToInt32(id), true, true), 100).ScoreDocs;
+                    ScoreDoc[] hits = searcher.Search(NumericRangeQuery.NewInt32Range("trieInt", 4, Convert.ToInt32(id, CultureInfo.InvariantCulture), Convert.ToInt32(id, CultureInfo.InvariantCulture), true, true), 100).ScoreDocs;
                     Assert.AreEqual(1, hits.Length, "wrong number of hits");
                     Document d = searcher.Doc(hits[0].Doc);
                     Assert.AreEqual(Convert.ToString(id, CultureInfo.InvariantCulture), d.Get("id"));
 
-                    hits = searcher.Search(NumericRangeQuery.NewInt64Range("trieLong", 4, Convert.ToInt64(id), Convert.ToInt64(id), true, true), 100).ScoreDocs;
+                    hits = searcher.Search(NumericRangeQuery.NewInt64Range("trieLong", 4, Convert.ToInt64(id, CultureInfo.InvariantCulture), Convert.ToInt64(id, CultureInfo.InvariantCulture), true, true), 100).ScoreDocs;
                     Assert.AreEqual(1, hits.Length, "wrong number of hits");
                     d = searcher.Doc(hits[0].Doc);
                     Assert.AreEqual(Convert.ToString(id, CultureInfo.InvariantCulture), d.Get("id"));
