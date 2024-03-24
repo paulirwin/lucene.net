@@ -1,7 +1,6 @@
 ﻿using J2N.Collections.Generic.Extensions;
 using J2N.Threading;
 using Lucene.Net.Documents;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using RandomizedTesting.Generators;
 using System;
@@ -33,7 +32,6 @@ namespace Lucene.Net.Index
      * limitations under the License.
      */
 
-    using BytesRef = Lucene.Net.Util.BytesRef;
     using Directory = Lucene.Net.Store.Directory;
     using Document = Documents.Document;
     using Field = Field;
@@ -51,7 +49,6 @@ namespace Lucene.Net.Index
                                                      // Lucene3x doesnt have totalTermFreq, so the test isn't interesting there.
     [TestFixture]
     public class TestBagOfPositions : LuceneTestCase
-    
     {
         [Test]
         [Slow]
@@ -90,7 +87,7 @@ namespace Lucene.Net.Index
 
             ConcurrentQueue<string> postings = new ConcurrentQueue<string>(postingsList);
 
-            Directory dir = NewFSDirectory(CreateTempDir(GetFullMethodName()));
+            Directory dir = NewFSDirectory(CreateTempDir(GetFullMethodName())); // LUCENENET: using GetFullMethodName() instead of "bagofpositions"
 
             RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
 
@@ -128,7 +125,7 @@ namespace Lucene.Net.Index
                 Document document = new Document();
                 Field field = new Field("field", "", fieldType);
                 document.Add(field);
-                threads[threadID] = new ThreadAnonymousClass(this, numTerms, maxTermsPerDoc, postings, iw, startingGun, threadRandom, document, field);
+                threads[threadID] = new ThreadAnonymousClass(numTerms, maxTermsPerDoc, postings, iw, startingGun, threadRandom, document, field);
                 threads[threadID].Start();
             }
             startingGun.Signal();
@@ -160,8 +157,6 @@ namespace Lucene.Net.Index
 
         private sealed class ThreadAnonymousClass : ThreadJob
         {
-            private readonly TestBagOfPositions outerInstance;
-
             private readonly int numTerms;
             private readonly int maxTermsPerDoc;
             private readonly ConcurrentQueue<string> postings;
@@ -171,9 +166,8 @@ namespace Lucene.Net.Index
             private readonly Document document;
             private readonly Field field;
 
-            public ThreadAnonymousClass(TestBagOfPositions outerInstance, int numTerms, int maxTermsPerDoc, ConcurrentQueue<string> postings, RandomIndexWriter iw, CountdownEvent startingGun, Random threadRandom, Document document, Field field)
+            public ThreadAnonymousClass(int numTerms, int maxTermsPerDoc, ConcurrentQueue<string> postings, RandomIndexWriter iw, CountdownEvent startingGun, Random threadRandom, Document document, Field field)
             {
-                this.outerInstance = outerInstance;
                 this.numTerms = numTerms;
                 this.maxTermsPerDoc = maxTermsPerDoc;
                 this.postings = postings;
@@ -189,7 +183,7 @@ namespace Lucene.Net.Index
                 try
                 {
                     startingGun.Wait();
-                    while (!(postings.Count == 0))
+                    while (!postings.IsEmpty)
                     {
                         StringBuilder text = new StringBuilder();
                         int numTerms = threadRandom.Next(maxTermsPerDoc);
