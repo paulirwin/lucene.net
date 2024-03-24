@@ -2,7 +2,6 @@
 using Lucene.Net.Documents;
 using NUnit.Framework;
 using System;
-using System.IO;
 
 namespace Lucene.Net.Index
 {
