@@ -15,6 +15,7 @@ using NUnit.Framework;
 using RandomizedTesting.Generators;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using Assert = Lucene.Net.TestFramework.Assert;
@@ -112,7 +113,8 @@ namespace Lucene.Net.Index
         public virtual void TestUpdatesAreFlushed()
         {
             Directory dir = NewDirectory();
-            IndexWriter writer = new IndexWriter(dir, (IndexWriterConfig)NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random, MockTokenizer.WHITESPACE, false)).SetRAMBufferSizeMB(0.00000001));
+            IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random, MockTokenizer.WHITESPACE, false))
+                .SetRAMBufferSizeMB(0.00000001));
             writer.AddDocument(Doc(0)); // val=1
             writer.AddDocument(Doc(1)); // val=2
             writer.AddDocument(Doc(3)); // val=2
@@ -153,8 +155,8 @@ namespace Lucene.Net.Index
             {
                 writer.Dispose();
                 reader = DirectoryReader.Open(dir);
-            } // NRT
-            else
+            }
+            else // NRT
             {
                 reader = DirectoryReader.Open(writer, true);
                 writer.Dispose();
@@ -179,7 +181,7 @@ namespace Lucene.Net.Index
             conf.SetMaxBufferedDocs(2); // generate few segments
             conf.SetMergePolicy(NoMergePolicy.COMPOUND_FILES); // prevent merges for this test
             IndexWriter writer = new IndexWriter(dir, conf);
-            int numDocs = 10;
+            const int numDocs = 10;
             long[] expectedValues = new long[numDocs];
             for (int i = 0; i < numDocs; i++)
             {
@@ -303,8 +305,8 @@ namespace Lucene.Net.Index
             {
                 writer.Dispose();
                 reader = DirectoryReader.Open(dir);
-            } // NRT
-            else
+            }
+            else // NRT
             {
                 reader = DirectoryReader.Open(writer, true);
                 writer.Dispose();
@@ -396,8 +398,8 @@ namespace Lucene.Net.Index
             {
                 writer.Dispose();
                 reader = DirectoryReader.Open(dir);
-            } // NRT
-            else
+            }
+            else // NRT
             {
                 reader = DirectoryReader.Open(writer, true);
                 writer.Dispose();
@@ -424,10 +426,10 @@ namespace Lucene.Net.Index
                 Document doc = new Document();
                 doc.Add(new StringField("dvUpdateKey", "dv", Store.NO));
                 doc.Add(new NumericDocValuesField("ndv", i));
-                doc.Add(new BinaryDocValuesField("bdv", new BytesRef(Convert.ToString(i))));
-                doc.Add(new SortedDocValuesField("sdv", new BytesRef(Convert.ToString(i))));
-                doc.Add(new SortedSetDocValuesField("ssdv", new BytesRef(Convert.ToString(i))));
-                doc.Add(new SortedSetDocValuesField("ssdv", new BytesRef(Convert.ToString(i * 2))));
+                doc.Add(new BinaryDocValuesField("bdv", new BytesRef(Convert.ToString(i, CultureInfo.InvariantCulture))));
+                doc.Add(new SortedDocValuesField("sdv", new BytesRef(Convert.ToString(i, CultureInfo.InvariantCulture))));
+                doc.Add(new SortedSetDocValuesField("ssdv", new BytesRef(Convert.ToString(i, CultureInfo.InvariantCulture))));
+                doc.Add(new SortedSetDocValuesField("ssdv", new BytesRef(Convert.ToString(i * 2, CultureInfo.InvariantCulture))));
                 writer.AddDocument(doc);
             }
             writer.Commit();
@@ -448,16 +450,16 @@ namespace Lucene.Net.Index
                 Assert.AreEqual(i, ndv.Get(i));
                 Assert.AreEqual(17, GetValue(bdv, i, scratch));
                 sdv.Get(i, scratch);
-                Assert.AreEqual(new BytesRef(Convert.ToString(i)), scratch);
+                Assert.AreEqual(new BytesRef(Convert.ToString(i, CultureInfo.InvariantCulture)), scratch);
                 ssdv.SetDocument(i);
                 long ord = ssdv.NextOrd();
                 ssdv.LookupOrd(ord, scratch);
-                Assert.AreEqual(i, Convert.ToInt32(scratch.Utf8ToString()));
+                Assert.AreEqual(i, Convert.ToInt32(scratch.Utf8ToString(), CultureInfo.InvariantCulture));
                 if (i != 0)
                 {
                     ord = ssdv.NextOrd();
                     ssdv.LookupOrd(ord, scratch);
-                    Assert.AreEqual(i * 2, Convert.ToInt32(scratch.Utf8ToString()));
+                    Assert.AreEqual(i * 2, Convert.ToInt32(scratch.Utf8ToString(), CultureInfo.InvariantCulture));
                 }
                 Assert.AreEqual(SortedSetDocValues.NO_MORE_ORDS, ssdv.NextOrd());
             }
@@ -670,7 +672,7 @@ namespace Lucene.Net.Index
         {
             Directory dir = NewDirectory();
             IndexWriterConfig conf = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
-            conf.SetCodec(new Lucene46CodecAnonymousClass(this));
+            conf.SetCodec(new Lucene46CodecAnonymousClass());
             IndexWriter writer = new IndexWriter(dir, conf);
 
             Document doc = new Document();
@@ -703,13 +705,6 @@ namespace Lucene.Net.Index
 
         private sealed class Lucene46CodecAnonymousClass : Lucene46Codec
         {
-            private readonly TestBinaryDocValuesUpdates outerInstance;
-
-            public Lucene46CodecAnonymousClass(TestBinaryDocValuesUpdates outerInstance)
-            {
-                this.outerInstance = outerInstance;
-            }
-
             public override DocValuesFormat GetDocValuesFormatForField(string field)
             {
                 return new Lucene45DocValuesFormat();
@@ -765,7 +760,7 @@ namespace Lucene.Net.Index
                 for (int i = 0; i < numDocs; i++)
                 {
                     doc.RemoveField("id");
-                    doc.Add(new StringField("id", Convert.ToString(docid++), Store.NO));
+                    doc.Add(new StringField("id", Convert.ToString(docid++, CultureInfo.InvariantCulture), Store.NO));
                     writer.AddDocument(doc);
                 }
 
@@ -774,7 +769,7 @@ namespace Lucene.Net.Index
 
                 if (random.NextDouble() < 0.2) // randomly delete some docs
                 {
-                    writer.DeleteDocuments(new Term("id", Convert.ToString(random.Next(docid))));
+                    writer.DeleteDocuments(new Term("id", Convert.ToString(random.Next(docid), CultureInfo.InvariantCulture)));
                 }
 
                 // randomly commit or reopen-IW (or nothing), before forceMerge
@@ -795,7 +790,7 @@ namespace Lucene.Net.Index
                 // and some MPs might now merge it, thereby invalidating test's
                 // assumption that the reader has no deletes).
                 doc = new Document();
-                doc.Add(new StringField("id", Convert.ToString(docid++), Store.NO));
+                doc.Add(new StringField("id", Convert.ToString(docid++, CultureInfo.InvariantCulture), Store.NO));
                 doc.Add(new StringField("key", "doc", Store.NO));
                 doc.Add(new BinaryDocValuesField("bdv", ToBytes(value)));
                 writer.AddDocument(doc);
@@ -1143,6 +1138,9 @@ namespace Lucene.Net.Index
             doc.Add(new BinaryDocValuesField("f", ToBytes(5L)));
             writer.AddDocument(doc);
             writer.Dispose();
+
+            // LUCENENET: The "old format not active" case has been moved to a separate test below
+
             dir.Dispose();
         }
 
@@ -1240,7 +1238,7 @@ namespace Lucene.Net.Index
             {
                 string f = "f" + i;
                 string cf = "cf" + i;
-                threads[i] = new ThreadAnonymousClass(this, "UpdateThread-" + i, writer, numDocs, done, numUpdates, f, cf);
+                threads[i] = new ThreadAnonymousClass("UpdateThread-" + i, writer, numDocs, done, numUpdates, f, cf);
             }
 
             foreach (ThreadJob t in threads)
@@ -1282,8 +1280,6 @@ namespace Lucene.Net.Index
 
         private sealed class ThreadAnonymousClass : ThreadJob
         {
-            private readonly TestBinaryDocValuesUpdates outerInstance;
-
             private readonly IndexWriter writer;
             private readonly int numDocs;
             private readonly CountdownEvent done;
@@ -1291,10 +1287,9 @@ namespace Lucene.Net.Index
             private readonly string f;
             private readonly string cf;
 
-            public ThreadAnonymousClass(TestBinaryDocValuesUpdates outerInstance, string str, IndexWriter writer, int numDocs, CountdownEvent done, AtomicInt32 numUpdates, string f, string cf)
+            public ThreadAnonymousClass(string str, IndexWriter writer, int numDocs, CountdownEvent done, AtomicInt32 numUpdates, string f, string cf)
                 : base(str)
             {
-                this.outerInstance = outerInstance;
                 this.writer = writer;
                 this.numDocs = numDocs;
                 this.done = done;
@@ -1455,7 +1450,7 @@ namespace Lucene.Net.Index
             Directory dir = NewDirectory();
             IndexWriterConfig conf = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             conf.SetMergePolicy(NoMergePolicy.COMPOUND_FILES); // disable merges to simplify test assertions.
-            conf.SetCodec(new Lucene46CodecAnonymousClass2(this));
+            conf.SetCodec(new Lucene46CodecAnonymousClass2());
             IndexWriter writer = new IndexWriter(dir, (IndexWriterConfig)conf.Clone());
             Document doc = new Document();
             doc.Add(new StringField("id", "d0", Store.NO));
@@ -1465,7 +1460,7 @@ namespace Lucene.Net.Index
             writer.Dispose();
 
             // change format
-            conf.SetCodec(new Lucene46CodecAnonymousClass3(this));
+            conf.SetCodec(new Lucene46CodecAnonymousClass3());
             writer = new IndexWriter(dir, (IndexWriterConfig)conf.Clone());
             doc = new Document();
             doc.Add(new StringField("id", "d1", Store.NO));
@@ -1490,13 +1485,6 @@ namespace Lucene.Net.Index
 
         private sealed class Lucene46CodecAnonymousClass2 : Lucene46Codec
         {
-            private readonly TestBinaryDocValuesUpdates outerInstance;
-
-            public Lucene46CodecAnonymousClass2(TestBinaryDocValuesUpdates outerInstance)
-            {
-                this.outerInstance = outerInstance;
-            }
-
             public override DocValuesFormat GetDocValuesFormatForField(string field)
             {
                 return new Lucene45DocValuesFormat();
@@ -1505,13 +1493,6 @@ namespace Lucene.Net.Index
 
         private sealed class Lucene46CodecAnonymousClass3 : Lucene46Codec
         {
-            private readonly TestBinaryDocValuesUpdates outerInstance;
-
-            public Lucene46CodecAnonymousClass3(TestBinaryDocValuesUpdates outerInstance)
-            {
-                this.outerInstance = outerInstance;
-            }
-
             public override DocValuesFormat GetDocValuesFormatForField(string field)
             {
                 return new AssertingDocValuesFormat();
@@ -1783,8 +1764,8 @@ namespace Lucene.Net.Index
 
         /// <summary>
         /// Using the exact translation from Lucene, we had an issue where loss of float precision was causing
-        /// index corruption when using binary doc values in combination with a 32 bit application to write the index. 
-        /// Consequently, a 64 bit application could not read an index generated by a 32 bit application and a 
+        /// index corruption when using binary doc values in combination with a 32 bit application to write the index.
+        /// Consequently, a 64 bit application could not read an index generated by a 32 bit application and a
         /// 32 bit application could not read an index written by Java Lucene (regardless of bitness).
         /// <para/>
         /// This test is to verify that the current test environment (be it 32 or 64 bit) can read an index with
@@ -1799,8 +1780,8 @@ namespace Lucene.Net.Index
         [LuceneNetSpecific]
         public virtual void TestReadIndexBitness()
         {
-            string[] alphabet = new string[] { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" };
-            int iterations = 500;
+            string[] alphabet = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" };
+            const int iterations = 500;
             FacetsConfig facetConfig = GetFacetConfig();
 
             // Unzip index
@@ -1822,8 +1803,7 @@ namespace Lucene.Net.Index
             IndexReader indexReader = DirectoryReader.Open(nFsd);
             IndexSearcher searcher = new IndexSearcher(indexReader);
 
-            DirectoryTaxonomyReader taxoReader =
-                new DirectoryTaxonomyReader(FSDirectory.Open(taxoDir));
+            var taxoReader = new DirectoryTaxonomyReader(FSDirectory.Open(taxoDir));
 
             try
             {
@@ -1835,14 +1815,14 @@ namespace Lucene.Net.Index
                     Facets facets = new FastTaxonomyFacetCounts(taxoReader, facetConfig, c);
                     FacetResult result = facets.GetTopChildren(int.MaxValue, "facetField1");
 
-                    assertEquals(iterations, System.Convert.ToInt32(result.LabelValues[0].Value));
+                    assertEquals(iterations, Convert.ToInt32(result.LabelValues[0].Value, CultureInfo.InvariantCulture));
 
                     FacetResult result2 = facets.GetTopChildren(int.MaxValue, "facetField2");
 
-                    
+
                     for (int i = 0; i < iterations; i++)
                     {
-                        assertEquals(i, System.Convert.ToInt32(result2.LabelValues[i].Label));
+                        assertEquals(i, Convert.ToInt32(result2.LabelValues[i].Label, CultureInfo.InvariantCulture));
                     }
                 }
 
@@ -1854,8 +1834,6 @@ namespace Lucene.Net.Index
             }
         }
 
-#endif
-
         private FacetsConfig GetFacetConfig()
         {
             FacetsConfig facetConfig = new FacetsConfig();
@@ -1865,5 +1843,6 @@ namespace Lucene.Net.Index
             config.SetRequireDimCount("facetField2", true);
             return facetConfig;
         }
+#endif
     }
 }
