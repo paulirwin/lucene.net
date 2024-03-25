@@ -47,7 +47,8 @@ namespace Lucene.Net.Index
             for (int i = 0; i < 2; i++)
             {
                 Directory dir = NewDirectory();
-                IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NoMergePolicy.COMPOUND_FILES));
+                IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))
+                    .SetMergePolicy(NoMergePolicy.COMPOUND_FILES));
 
                 Document d1 = new Document();
                 d1.Add(new StringField("f1", "first field", Field.Store.YES));
@@ -57,7 +58,8 @@ namespace Lucene.Net.Index
                 if (i == 1)
                 {
                     writer.Dispose();
-                    writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NoMergePolicy.COMPOUND_FILES));
+                    writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))
+                        .SetMergePolicy(NoMergePolicy.COMPOUND_FILES));
                 }
                 else
                 {
@@ -113,7 +115,8 @@ namespace Lucene.Net.Index
         {
             Directory dir1 = NewDirectory();
             Directory dir2 = NewDirectory();
-            IndexWriter writer = new IndexWriter(dir1, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NoMergePolicy.COMPOUND_FILES));
+            IndexWriter writer = new IndexWriter(dir1, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))
+                .SetMergePolicy(NoMergePolicy.COMPOUND_FILES));
 
             Document d1 = new Document();
             d1.Add(new TextField("f1", "first field", Field.Store.YES));
@@ -121,7 +124,8 @@ namespace Lucene.Net.Index
             writer.AddDocument(d1);
 
             writer.Dispose();
-            writer = new IndexWriter(dir2, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NoMergePolicy.COMPOUND_FILES));
+            writer = new IndexWriter(dir2, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))
+                .SetMergePolicy(NoMergePolicy.COMPOUND_FILES));
 
             Document d2 = new Document();
             FieldType customType2 = new FieldType(TextField.TYPE_STORED);
@@ -134,7 +138,8 @@ namespace Lucene.Net.Index
 
             writer.Dispose();
 
-            writer = new IndexWriter(dir1, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NoMergePolicy.COMPOUND_FILES));
+            writer = new IndexWriter(dir1, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))
+                .SetMergePolicy(NoMergePolicy.COMPOUND_FILES));
             writer.AddIndexes(dir2);
             writer.Dispose();
 
@@ -165,7 +170,8 @@ namespace Lucene.Net.Index
             {
                 Directory dir = NewDirectory();
                 {
-                    IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NoMergePolicy.NO_COMPOUND_FILES));
+                    IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))
+                        .SetMergePolicy(NoMergePolicy.NO_COMPOUND_FILES));
                     Document d = new Document();
                     d.Add(new TextField("f1", "d1 first field", Field.Store.YES));
                     d.Add(new TextField("f2", "d1 second field", Field.Store.YES));
@@ -180,7 +186,8 @@ namespace Lucene.Net.Index
                 }
 
                 {
-                    IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(Random.NextBoolean() ? NoMergePolicy.NO_COMPOUND_FILES : NoMergePolicy.COMPOUND_FILES));
+                    IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))
+                        .SetMergePolicy(Random.NextBoolean() ? NoMergePolicy.NO_COMPOUND_FILES : NoMergePolicy.COMPOUND_FILES));
                     Document d = new Document();
                     d.Add(new TextField("f1", "d2 first field", Field.Store.YES));
                     d.Add(new StoredField("f3", new byte[] { 1, 2, 3 }));
@@ -199,7 +206,8 @@ namespace Lucene.Net.Index
                 }
 
                 {
-                    IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(Random.NextBoolean() ? NoMergePolicy.NO_COMPOUND_FILES : NoMergePolicy.COMPOUND_FILES));
+                    IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))
+                        .SetMergePolicy(Random.NextBoolean() ? NoMergePolicy.NO_COMPOUND_FILES : NoMergePolicy.COMPOUND_FILES));
                     Document d = new Document();
                     d.Add(new TextField("f1", "d3 first field", Field.Store.YES));
                     d.Add(new TextField("f2", "d3 second field", Field.Store.YES));
@@ -223,7 +231,8 @@ namespace Lucene.Net.Index
                 }
 
                 {
-                    IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(Random.NextBoolean() ? NoMergePolicy.NO_COMPOUND_FILES : NoMergePolicy.COMPOUND_FILES));
+                    IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))
+                        .SetMergePolicy(Random.NextBoolean() ? NoMergePolicy.NO_COMPOUND_FILES : NoMergePolicy.COMPOUND_FILES));
                     writer.DeleteDocuments(new Term("f1", "d1"));
                     // nuke the first segment entirely so that the segment with gaps is
                     // loaded first!
@@ -231,7 +240,8 @@ namespace Lucene.Net.Index
                     writer.Dispose();
                 }
 
-                IndexWriter writer_ = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(new LogByteSizeMergePolicy()).SetInfoStream(new FailOnNonBulkMergesInfoStream()));
+                IndexWriter writer_ = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))
+                    .SetMergePolicy(new LogByteSizeMergePolicy()).SetInfoStream(new FailOnNonBulkMergesInfoStream()));
                 writer_.ForceMerge(1);
                 writer_.Dispose();
 
@@ -286,7 +296,7 @@ namespace Lucene.Net.Index
 
                 foreach (FieldInfo fi in fis)
                 {
-                    Field expected = GetField(Convert.ToInt32(fi.Name));
+                    Field expected = GetField(Convert.ToInt32(fi.Name, CultureInfo.InvariantCulture));
                     Assert.AreEqual(expected.FieldType.IsIndexed, fi.IsIndexed);
                     Assert.AreEqual(expected.FieldType.StoreTermVectors, fi.HasVectors);
                 }
@@ -371,52 +381,36 @@ namespace Lucene.Net.Index
             {
                 case 0:
                     return new Field(fieldName, "some text", customType);
-
                 case 1:
                     return new TextField(fieldName, "some text", Field.Store.NO);
-
                 case 2:
                     return new Field(fieldName, "some text", customType2);
-
                 case 3:
                     return new Field(fieldName, "some text", customType3);
-
                 case 4:
                     return new Field(fieldName, "some text", customType4);
-
                 case 5:
                     return new Field(fieldName, "some text", customType5);
-
                 case 6:
                     return new Field(fieldName, "some text", customType6);
-
                 case 7:
                     return new Field(fieldName, "some text", customType7);
-
                 case 8:
                     return new Field(fieldName, "some text", customType8);
-
                 case 9:
                     return new Field(fieldName, "some text", customType9);
-
                 case 10:
                     return new Field(fieldName, "some text", customType10);
-
                 case 11:
                     return new Field(fieldName, "some text", customType11);
-
                 case 12:
                     return new Field(fieldName, "some text", customType12);
-
                 case 13:
                     return new Field(fieldName, "some text", customType13);
-
                 case 14:
                     return new Field(fieldName, "some text", customType14);
-
                 case 15:
                     return new Field(fieldName, "some text", customType15);
-
                 default:
                     return null;
             }
