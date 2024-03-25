@@ -85,9 +85,7 @@ namespace Lucene.Net.Index
                 indexWriter.Commit();
                 Assert.Fail("should have hit CrashingException");
             }
-#pragma warning disable 168
-            catch (CrashingException e)
-#pragma warning restore 168
+            catch (CrashingException)
             {
                 // expected
             }
@@ -163,7 +161,7 @@ namespace Lucene.Net.Index
         /// this test class provides direct access to "simulating" a crash right after
         /// realDirectory.CreateOutput(..) has been called on a certain specified name.
         /// </summary>
-        private class CrashAfterCreateOutput : FilterDirectory
+        private sealed class CrashAfterCreateOutput : FilterDirectory // LUCENENET: sealing to allow for safe virtual call in ctor
         {
             internal string crashAfterCreateOutput;
 
@@ -173,7 +171,7 @@ namespace Lucene.Net.Index
                 SetLockFactory(realDirectory.LockFactory);
             }
 
-            public virtual string GetCrashAfterCreateOutput
+            public string GetCrashAfterCreateOutput
             {
                 set => this.crashAfterCreateOutput = value;
             }

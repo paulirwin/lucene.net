@@ -381,13 +381,12 @@ namespace Lucene.Net.Index
             }
         }
 
-        private class TrackingCMS : ConcurrentMergeScheduler
+        private sealed class TrackingCMS : ConcurrentMergeScheduler // LUCENENET: sealing to allow for safe virtual call in ctor
         {
             internal long totMergedBytes;
 
             public TrackingCMS()
             {
-                // ReSharper disable once VirtualMemberCallInConstructor - from upstream Java code
                 SetMaxMergesAndThreads(5, 5);
             }
 
