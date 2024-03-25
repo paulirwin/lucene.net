@@ -49,11 +49,7 @@ namespace Lucene.Net.Index
                 .SetMaxBufferedDocs(10)
                 .SetMergeScheduler(new ConcurrentMergeScheduler()));
 
-            IConcurrentMergeScheduler scheduler = writer.Config.MergeScheduler as IConcurrentMergeScheduler;
-            if (scheduler != null)
-            {
-                scheduler.SetSuppressExceptions();
-            }
+            ((IConcurrentMergeScheduler)writer.Config.MergeScheduler).SetSuppressExceptions();
 
             if (initialCommit)
             {
@@ -106,7 +102,7 @@ namespace Lucene.Net.Index
             Directory dir2 = NewDirectory(dir);
             dir.Dispose();
 
-            (new RandomIndexWriter(Random, dir2)).Dispose();
+            new RandomIndexWriter(Random, dir2).Dispose();
             dir2.Dispose();
         }
 
@@ -141,7 +137,7 @@ namespace Lucene.Net.Index
             Directory dir2 = NewDirectory(dir);
             dir.Dispose();
 
-            (new RandomIndexWriter(Random, dir2)).Dispose();
+            new RandomIndexWriter(Random, dir2).Dispose();
             dir2.Dispose();
         }
 
@@ -179,7 +175,7 @@ namespace Lucene.Net.Index
             Directory dir2 = NewDirectory(dir);
             dir.Dispose();
 
-            (new RandomIndexWriter(Random, dir2)).Dispose();
+            new RandomIndexWriter(Random, dir2).Dispose();
             dir2.Dispose();
         }
 
