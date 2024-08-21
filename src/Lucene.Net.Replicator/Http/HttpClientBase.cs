@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -53,7 +52,7 @@ namespace Lucene.Net.Replicator.Http
         // TODO compression?
 
         /// <summary>
-        /// The URL to execute requests against. 
+        /// The URL to execute requests against.
         /// </summary>
         protected string Url { get; private set; }
 
@@ -64,7 +63,7 @@ namespace Lucene.Net.Replicator.Http
         /// Creates a new <see cref="HttpClientBase"/> with the given host, port and path.
         /// </summary>
         /// <remarks>
-        /// The host, port and path parameters are normalized to <c>http://{host}:{port}{path}</c>, 
+        /// The host, port and path parameters are normalized to <c>http://{host}:{port}{path}</c>,
         /// if path is <c>null</c> or <c>empty</c> it defaults to <c>/</c>.
         /// <para/>
         /// A <see cref="HttpMessageHandler"/> is taken as an optional parameter as well, if this is not provided it defaults to <c>null</c>.
@@ -98,7 +97,7 @@ namespace Lucene.Net.Replicator.Http
         /// Creates a new <see cref="HttpClientBase"/> with the given <paramref name="url"/> and <see cref="HttpClient"/>.
         /// </summary>
         /// <remarks>
-        /// This allows full controll over how the <see cref="HttpClient"/> is created, 
+        /// This allows full controll over how the <see cref="HttpClient"/> is created,
         /// prefer the <see cref="HttpClientBase(string, HttpMessageHandler)"/> over this unless you know you need the control of the <see cref="HttpClient"/>.
         /// </remarks>
         /// <param name="url"></param>
@@ -122,7 +121,7 @@ namespace Lucene.Net.Replicator.Http
         }
 
         /// <summary>
-        /// Throws <see cref="ObjectDisposedException"/> if this client is already disposed. 
+        /// Throws <see cref="ObjectDisposedException"/> if this client is already disposed.
         /// </summary>
         /// <exception cref="ObjectDisposedException">client is already disposed.</exception>
         protected void EnsureOpen()
@@ -193,12 +192,12 @@ namespace Lucene.Net.Replicator.Http
                 throw RuntimeException.Create("Unknown error: ", t);
             }
 
-            Exception exception;
+            ReplicationServiceException exception;
             try
             {
                 TextReader reader = new StreamReader(input);
-                JsonSerializer serializer = JsonSerializer.Create(ReplicationService.JSON_SERIALIZER_SETTINGS);
-                exception = (Exception)serializer.Deserialize(new JsonTextReader(reader));
+                JsonSerializer serializer = JsonSerializer.Create();
+                exception = serializer.Deserialize<ReplicationServiceException>(new JsonTextReader(reader));
             }
             catch (Exception th) when (th.IsThrowable())
             {
@@ -224,7 +223,7 @@ namespace Lucene.Net.Replicator.Http
             //.NET Note: No headers? No ContentType?... Bad use of Http?
             HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, QueryString(request, parameters));
 
-            req.Content = new StringContent(JToken.FromObject(entity, JsonSerializer.Create(ReplicationService.JSON_SERIALIZER_SETTINGS))
+            req.Content = new StringContent(JToken.FromObject(entity, JsonSerializer.Create())
                 .ToString(Formatting.None), Encoding.UTF8, "application/json");
 
             return Execute(req);
@@ -272,7 +271,7 @@ namespace Lucene.Net.Replicator.Http
 
         // TODO: can we simplify this Consuming !?!?!?
         /// <summary>
-        /// Internal utility: input stream of the provided response, which optionally 
+        /// Internal utility: input stream of the provided response, which optionally
         /// consumes the response's resources when the input stream is exhausted.
         /// </summary>
         /// <exception cref="IOException"></exception>
@@ -293,7 +292,7 @@ namespace Lucene.Net.Replicator.Http
 
         // TODO: can we simplify this Consuming !?!?!?
         /// <summary>
-        /// Internal utility: input stream of the provided response, which optionally 
+        /// Internal utility: input stream of the provided response, which optionally
         /// consumes the response's resources when the input stream is exhausted.
         /// </summary>
         /// <exception cref="IOException"></exception>
@@ -321,7 +320,7 @@ namespace Lucene.Net.Replicator.Http
         }
 
         /// <summary>
-        /// Do a specific action and validate after the action that the status is still OK, 
+        /// Do a specific action and validate after the action that the status is still OK,
         /// and if not, attempt to extract the actual server side exception. Optionally
         /// release the response at exit, depending on <paramref name="consume"/> parameter.
         /// </summary>
@@ -359,11 +358,11 @@ namespace Lucene.Net.Replicator.Http
             }
             if (Debugging.AssertsEnabled) Debugging.Assert(th != null); // extra safety - if we get here, it means the Func<T> failed
             Util.IOUtils.ReThrow(th);
-            return default; // silly, if we're here, IOUtils.reThrow always throws an exception 
+            return default; // silly, if we're here, IOUtils.reThrow always throws an exception
         }
 
         /// <summary>
-        /// Disposes this <see cref="HttpClientBase"/>. 
+        /// Disposes this <see cref="HttpClientBase"/>.
         /// When called with <code>true</code>, this disposes the underlying <see cref="HttpClient"/>.
         /// </summary>
         protected virtual void Dispose(bool disposing)
@@ -376,7 +375,7 @@ namespace Lucene.Net.Replicator.Http
         }
 
         /// <summary>
-        /// Disposes this <see cref="HttpClientBase"/>. 
+        /// Disposes this <see cref="HttpClientBase"/>.
         /// This disposes the underlying <see cref="HttpClient"/>.
         /// </summary>
         public void Dispose()
