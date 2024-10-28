@@ -79,6 +79,7 @@ namespace Lucene.Net.Analysis.CommonGrams
             AssertTokenStreamContents(stream, new string[] { "testing", "testing_the", "the", "the_factory", "factory" });
         }
 
+        // LUCENENET-specific: backporting case sensitivity fix from 8.10.0 (lucene#188)
         [Test]
         public void TestIgnoreCase()
         {
@@ -95,6 +96,7 @@ namespace Lucene.Net.Analysis.CommonGrams
             AssertTokenStreamContents(
                 stream, new String[] {"testing", "testing_The", "The", "The_factory", "factory"});
         }
+
         /// <summary>
         /// Test that bogus arguments result in exception </summary>
         [Test]
