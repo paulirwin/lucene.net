@@ -5,11 +5,9 @@ using Lucene.Net.Analysis.Core;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Analysis.Util;
 using Lucene.Net.Attributes;
-using Lucene.Net.Support.Threading;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using JCG = J2N.Collections.Generic;
@@ -35,9 +33,7 @@ namespace Lucene.Net.Analysis.Th
 
     /// <summary>
     /// Test case for ThaiAnalyzer, modified from TestFrenchAnalyzer
-    /// 
     /// </summary>
-
     public class TestThaiAnalyzer : BaseTokenStreamTestCase
     {
         [SetUp]
@@ -47,6 +43,7 @@ namespace Lucene.Net.Analysis.Th
             // LUCENENET specific - ICU always has a dictionary-based BreakIterator in .NET.
             //AssumeTrue("JRE does not support Thai dictionary-based BreakIterator", ThaiTokenizer.DBBI_AVAILABLE);
         }
+
         /*
          * testcase for offsets
          */
@@ -73,8 +70,8 @@ namespace Lucene.Net.Analysis.Th
         }
 
         /// <summary>
-        /// Thai numeric tokens were typed as <ALPHANUM> instead of <NUM>. </summary>
-        /// @deprecated (3.1) testing backwards behavior 
+        /// Thai numeric tokens were typed as &lt;ALPHANUM&gt; instead of &lt;NUM&gt;.
+        /// </summary>
         [Test]
         [Obsolete("(3.1) testing backwards behavior")]
         public virtual void TestBuggyTokenType30()
@@ -82,7 +79,6 @@ namespace Lucene.Net.Analysis.Th
             AssertAnalyzesTo(new ThaiAnalyzer(LuceneVersion.LUCENE_30), "การที่ได้ต้องแสดงว่างานดี ๑๒๓", new string[] { "การ", "ที่", "ได้", "ต้อง", "แสดง", "ว่า", "งาน", "ดี", "๑๒๓" }, new string[] { "<ALPHANUM>", "<ALPHANUM>", "<ALPHANUM>", "<ALPHANUM>", "<ALPHANUM>", "<ALPHANUM>", "<ALPHANUM>", "<ALPHANUM>", "<ALPHANUM>" });
         }
 
-        /// @deprecated (3.1) testing backwards behavior 
         [Test]
         [Obsolete("(3.1) testing backwards behavior")]
         public virtual void TestAnalyzer30()
@@ -166,7 +162,6 @@ namespace Lucene.Net.Analysis.Th
             AssertAnalyzesTo(analyzer, "บริษัทชื่อ XY&Z - คุยกับ xyz@demo.com", new string[] { "บริษัท", "ชื่อ", "xy", "z", "คุย", "กับ", "xyz", "demo.com" });
         }
 
-        /// @deprecated (3.1) for version back compat 
         [Test]
         [Obsolete("(3.1) for version back compat")]
         public virtual void TestReusableTokenStream30()
@@ -296,9 +291,7 @@ namespace Lucene.Net.Analysis.Th
                             //ts.End();
                             //ts.Dispose();
                         }
-#pragma warning disable 168
-                        catch (Exception ex)
-#pragma warning restore 168
+                        catch (Exception /*ex*/)
                         {
                             // ignore
                         }
@@ -339,9 +332,7 @@ namespace Lucene.Net.Analysis.Th
                             //ts.End();
                             //ts.Dispose();
                         }
-#pragma warning disable 168
-                        catch (Exception ex)
-#pragma warning restore 168
+                        catch (Exception /*ex*/)
                         {
                             // ignore
                         }
@@ -354,19 +345,20 @@ namespace Lucene.Net.Analysis.Th
 
 
         /// <summary>
-        /// blast some random strings through the analyzer </summary>
+        /// blast some random strings through the analyzer
+        /// </summary>
         [Test]
-        [AwaitsFix(BugUrl = "https://github.com/apache/lucenenet/issues/269")] // LUCENENET TODO: this test occasionally fails
+        [Repeat(100)]
         public virtual void TestRandomStrings()
         {
             CheckRandomData(Random, new ThaiAnalyzer(TEST_VERSION_CURRENT), 1000 * RandomMultiplier);
         }
 
         /// <summary>
-        /// blast some random large strings through the analyzer </summary>
-        /// 
+        /// blast some random large strings through the analyzer
+        /// </summary>
         [Test]
-        [AwaitsFix(BugUrl = "https://github.com/apache/lucenenet/issues/269")] // LUCENENET TODO: this test occasionally fails
+        [Repeat(100)]
         public virtual void TestRandomHugeStrings()
         {
             Random random = Random;
@@ -383,7 +375,7 @@ namespace Lucene.Net.Analysis.Th
             // just consume
             TokenStream ts = analyzer.GetTokenStream("dummy", "ภาษาไทย");
             AssertTokenStreamContents(ts, new string[] { "ภาษา", "ไทย" });
-            // this consumer adds flagsAtt, which this analyzer does not use. 
+            // this consumer adds flagsAtt, which this analyzer does not use.
             ts = analyzer.GetTokenStream("dummy", "ภาษาไทย");
             ts.AddAttribute<IFlagsAttribute>();
             AssertTokenStreamContents(ts, new string[] { "ภาษา", "ไทย" });
@@ -402,7 +394,7 @@ namespace Lucene.Net.Analysis.Th
         public virtual void TestNumeralBreaking()
         {
             ThaiAnalyzer analyzer = new ThaiAnalyzer(TEST_VERSION_CURRENT, CharArraySet.Empty);
-            AssertAnalyzesTo(analyzer, "๑๒๓456", new String[] { "๑๒๓456" });
+            AssertAnalyzesTo(analyzer, "๑๒๓456", new string[] { "๑๒๓456" });
         }
     }
 }
