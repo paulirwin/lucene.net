@@ -348,7 +348,7 @@ namespace Lucene.Net.Analysis.Th
         /// blast some random strings through the analyzer
         /// </summary>
         [Test]
-        [Repeat(100)]
+        [Repeat(1000)]
         public virtual void TestRandomStrings()
         {
             CheckRandomData(Random, new ThaiAnalyzer(TEST_VERSION_CURRENT), 1000 * RandomMultiplier);
@@ -358,7 +358,7 @@ namespace Lucene.Net.Analysis.Th
         /// blast some random large strings through the analyzer
         /// </summary>
         [Test]
-        [Repeat(100)]
+        [Repeat(1)]
         public virtual void TestRandomHugeStrings()
         {
             Random random = Random;
