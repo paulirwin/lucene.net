@@ -30,15 +30,13 @@
   <Import Project="$(SolutionDir).build/nuget.props" />
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;netstandard2.1;netstandard2.0;net462</TargetFrameworks>
+    <TargetFrameworks>net8.0;netstandard2.1;net462</TargetFrameworks>
 
     <AssemblyTitle>Lucene.Net.Analysis.Common</AssemblyTitle>
     <PackageTags>$(PackageTags);analysis</PackageTags>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <NoWarn>$(NoWarn);1591;1573</NoWarn>
   </PropertyGroup>
-
-
 
   <ItemGroup>
     <EmbeddedResource Include="**/*.rslp" Exclude="bin/**/*;obj/**/*" Label="RSLP Test Data" />
@@ -48,10 +46,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Lucene.Net\Lucene.Net.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <PackageReference Include="System.Memory" Version="$(SystemMemoryPackageVersion)" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">

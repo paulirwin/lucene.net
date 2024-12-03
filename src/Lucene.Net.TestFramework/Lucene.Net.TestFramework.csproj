@@ -30,19 +30,16 @@
   <Import Project="$(SolutionDir).build/nuget.props" />
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;netstandard2.1;netstandard2.0;net462</TargetFrameworks>
+    <TargetFrameworks>net8.0;netstandard2.1;net462</TargetFrameworks>
 
     <AssemblyTitle>Lucene.Net.TestFramework</AssemblyTitle>
     <RootNamespace>Lucene.Net</RootNamespace>
     <PackageTags>$(PackageTags);testframework;test;framework;nunit</PackageTags>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
 
-
     <NoWarn>$(NoWarn);1591;1573</NoWarn>
     <NoWarn Label="Collection initialization can be simplified">$(NoWarn);IDE0028</NoWarn>
   </PropertyGroup>
-
-
 
   <ItemGroup>
     <None Remove="Util\europarl.lines.txt.gz" />
