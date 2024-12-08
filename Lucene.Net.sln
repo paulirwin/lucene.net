@@ -206,6 +206,8 @@ Project("{13B669BE-BB05-4DDF-9536-439F39A36129}") = "github", "proj\github.msbui
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lucene.Net.ApiCheck", "src\dotnet\Lucene.Net.ApiCheck\Lucene.Net.ApiCheck.csproj", "{8CF1AE3D-31C3-436E-B08B-1DD026D3F375}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lucene.Net.Tests.ApiCheck", "src\dotnet\Lucene.Net.Tests.ApiCheck\Lucene.Net.Tests.ApiCheck.csproj", "{87E78608-D8B8-43FE-9235-B594C5EFBEC7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -496,6 +498,10 @@ Global
 		{8CF1AE3D-31C3-436E-B08B-1DD026D3F375}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8CF1AE3D-31C3-436E-B08B-1DD026D3F375}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8CF1AE3D-31C3-436E-B08B-1DD026D3F375}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87E78608-D8B8-43FE-9235-B594C5EFBEC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87E78608-D8B8-43FE-9235-B594C5EFBEC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87E78608-D8B8-43FE-9235-B594C5EFBEC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87E78608-D8B8-43FE-9235-B594C5EFBEC7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -515,6 +521,7 @@ Global
 		{FED4A824-1F32-4948-8D37-2B7610804DB5} = {42599646-275F-4970-BC60-A3349F6498CC}
 		{C0448DD3-68D2-485F-B31A-D2806E589FA7} = {42599646-275F-4970-BC60-A3349F6498CC}
 		{8CF1AE3D-31C3-436E-B08B-1DD026D3F375} = {8CA61D33-3590-4024-A304-7B1F75B50653}
+		{87E78608-D8B8-43FE-9235-B594C5EFBEC7} = {8CA61D33-3590-4024-A304-7B1F75B50653}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9F2179CC-CFD2-4419-AB74-D72856931F36}
