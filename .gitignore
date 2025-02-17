@@ -67,3 +67,6 @@ svn-*/
 
 # vscode files
 .vscode/
+
+# macOS
+.DS_Store
