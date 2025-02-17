@@ -68,3 +68,6 @@ svn-*/
 # vscode files
 .vscode/
 .idea/**/misc.xml
+
+# macOS
+.DS_Store
