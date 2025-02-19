@@ -19,11 +19,12 @@
  *
 */
 
+using Lucene.Net.Reflection;
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-// General Information about an assembly is controlled through the following 
+// General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyDefaultAlias("Lucene.Net.Queries")]
@@ -31,12 +32,13 @@ using System.Runtime.InteropServices;
 
 [assembly: CLSCompliant(true)]
 
-// Setting ComVisible to false makes the types in this assembly not visible 
-// to COM components.  If you need to access a type in this assembly from 
+// Setting ComVisible to false makes the types in this assembly not visible
+// to COM components.  If you need to access a type in this assembly from
 // COM, set the ComVisible attribute to true on that type.
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("76a14bc5-8f0f-4de4-b501-423d4c1a20a5")]
 
-
+[assembly: LuceneMavenMapping("org.apache.lucene", "lucene-queries", "4.8.1")]
+[assembly: LucenePackageMapping("Lucene.Net.Queries.Function.ValueSources", "org.apache.lucene.queries.function.valuesource")]

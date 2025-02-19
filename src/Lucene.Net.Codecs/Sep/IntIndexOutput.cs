@@ -1,4 +1,5 @@
-﻿using Lucene.Net.Store;
+﻿using Lucene.Net.Reflection;
+using Lucene.Net.Store;
 using System;
 
 namespace Lucene.Net.Codecs.Sep
@@ -31,13 +32,14 @@ namespace Lucene.Net.Codecs.Sep
     /// <para/>
     /// NOTE: This was IntIndexOutput in Lucene
     /// <para/>
-    /// @lucene.experimental 
+    /// @lucene.experimental
     /// </summary>
+    [LuceneType("org.apache.lucene.codecs.sep", "IntIndexOutput")]
     public abstract class Int32IndexOutput : IDisposable
     {
         /// <summary>
         /// Write an <see cref="int"/> to the primary file.  The value must be
-        /// >= 0.  
+        /// >= 0.
         /// </summary>
         public abstract void Write(int v);
 
@@ -59,7 +61,7 @@ namespace Lucene.Net.Codecs.Sep
 
         /// <summary>
         /// If you are indexing the primary output file, call
-        /// this and interact with the returned IndexWriter. 
+        /// this and interact with the returned IndexWriter.
         /// </summary>
         public abstract Index GetIndex();
 
