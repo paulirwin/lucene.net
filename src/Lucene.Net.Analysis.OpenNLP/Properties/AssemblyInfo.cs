@@ -15,12 +15,12 @@
 * limitations under the License.
 */
 
+using Lucene.Net.Reflection;
 using System;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-// General Information about an assembly is controlled through the following 
+// General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyDefaultAlias("Lucene.Net.Analysis.OpenNLP")]
@@ -28,10 +28,12 @@ using System.Runtime.InteropServices;
 
 [assembly: CLSCompliant(false)] // OpenNLP.NET is not CLS compliant
 
-// Setting ComVisible to false makes the types in this assembly not visible 
-// to COM components.  If you need to access a type in this assembly from 
+// Setting ComVisible to false makes the types in this assembly not visible
+// to COM components.  If you need to access a type in this assembly from
 // COM, set the ComVisible attribute to true on that type.
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("7695c395-37dd-42d1-af27-6e0bf82bdb15")]
+
+[assembly: LuceneMavenMapping("org.apache.lucene", "lucene-analyzers-opennlp", "8.2.0")]
