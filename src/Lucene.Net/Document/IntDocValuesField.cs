@@ -1,3 +1,4 @@
+using Lucene.Net.Reflection;
 using System;
 
 namespace Lucene.Net.Documents
@@ -28,12 +29,13 @@ namespace Lucene.Net.Documents
     /// </code>
     ///
     /// If you also need to store the value, you should add a
-    /// separate <see cref="StoredField"/> instance. 
+    /// separate <see cref="StoredField"/> instance.
     /// <para/>
     /// NOTE: This was IntDocValuesField in Lucene
     /// </summary>
     /// <seealso cref="NumericDocValuesField"/>
     [Obsolete("Deprecated, use NumericDocValuesField instead")]
+    [LuceneType("org.apache.lucene.document", "IntDocValuesField")]
     public class Int32DocValuesField : NumericDocValuesField
     {
         /// <summary>

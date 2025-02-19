@@ -1,4 +1,6 @@
 ﻿// Lucene version compatibility level 4.8.1
+
+using Lucene.Net.Reflection;
 using System.Collections.Generic;
 
 namespace Lucene.Net.Facet.Taxonomy
@@ -31,14 +33,15 @@ namespace Lucene.Net.Facet.Taxonomy
     /// encoding.
     /// <para/>
     /// NOTE: This was TaxonomyFacetSumFloatAssociations in Lucene
-    /// 
-    /// @lucene.experimental 
+    ///
+    /// @lucene.experimental
     /// </summary>
+    [LuceneType("org.apache.lucene.facet.taxonomy", "TaxonomyFacetSumFloatAssociations")]
     public class TaxonomyFacetSumSingleAssociations : SingleTaxonomyFacets
     {
         /// <summary>
         /// Create <see cref="TaxonomyFacetSumSingleAssociations"/> against
-        /// the default index field. 
+        /// the default index field.
         /// </summary>
         public TaxonomyFacetSumSingleAssociations(TaxonomyReader taxoReader, FacetsConfig config, FacetsCollector fc)
             : this(FacetsConfig.DEFAULT_INDEX_FIELD_NAME, taxoReader, config, fc)
@@ -47,7 +50,7 @@ namespace Lucene.Net.Facet.Taxonomy
 
         /// <summary>
         /// Create <see cref="TaxonomyFacetSumSingleAssociations"/> against
-        /// the specified index field. 
+        /// the specified index field.
         /// </summary>
         public TaxonomyFacetSumSingleAssociations(string indexFieldName, TaxonomyReader taxoReader, FacetsConfig config, FacetsCollector fc)
             : base(indexFieldName, taxoReader, config)
@@ -81,10 +84,10 @@ namespace Lucene.Net.Facet.Taxonomy
                     int offset = scratch.Offset;
                     while (offset < end)
                     {
-                        int ord = ((bytes[offset] & 0xFF) << 24) | ((bytes[offset + 1] & 0xFF) << 16) | 
+                        int ord = ((bytes[offset] & 0xFF) << 24) | ((bytes[offset + 1] & 0xFF) << 16) |
                             ((bytes[offset + 2] & 0xFF) << 8) | (bytes[offset + 3] & 0xFF);
                         offset += 4;
-                        int value = ((bytes[offset] & 0xFF) << 24) | ((bytes[offset + 1] & 0xFF) << 16) | 
+                        int value = ((bytes[offset] & 0xFF) << 24) | ((bytes[offset + 1] & 0xFF) << 16) |
                             ((bytes[offset + 2] & 0xFF) << 8) | (bytes[offset + 3] & 0xFF);
                         offset += 4;
                         m_values[ord] += J2N.BitConversion.Int32BitsToSingle(value);

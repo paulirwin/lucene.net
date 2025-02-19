@@ -1,4 +1,6 @@
 ﻿// Lucene version compatibility level 4.8.1
+
+using Lucene.Net.Reflection;
 using Lucene.Net.Support;
 using System.Globalization;
 
@@ -31,15 +33,16 @@ namespace Lucene.Net.Facet.Taxonomy
     /// <para/>
     /// NOTE: This was FloatAssociationFacetField in Lucene
     /// <para/>
-    /// @lucene.experimental 
+    /// @lucene.experimental
     /// </summary>
+    [LuceneType("org.apache.lucene.facet.taxonomy", "FloatAssociationFacetField")]
     public class SingleAssociationFacetField : AssociationFacetField
     {
         /// <summary>
         /// Creates this from <paramref name="dim"/> and <paramref name="path"/> and a
-        /// <see cref="float"/> association 
+        /// <see cref="float"/> association
         /// </summary>
-        public SingleAssociationFacetField(float assoc, string dim, params string[] path) 
+        public SingleAssociationFacetField(float assoc, string dim, params string[] path)
             : base(SingleToBytesRef(assoc), dim, path)
         {
         }
@@ -66,7 +69,7 @@ namespace Lucene.Net.Facet.Taxonomy
 
         public override string ToString()
         {
-            return "SingleAssociationFacetField(dim=" + Dim + " path=" + Arrays.ToString(Path) + 
+            return "SingleAssociationFacetField(dim=" + Dim + " path=" + Arrays.ToString(Path) +
                 " value=" + BytesRefToSingle(Assoc).ToString("0.0#####", CultureInfo.InvariantCulture) + ")";
         }
     }
