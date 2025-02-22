@@ -38,3 +38,8 @@ using System.Runtime.InteropServices;
 
 [assembly: LuceneMavenMapping("org.apache.lucene", "lucene-benchmark", "4.8.1")]
 [assembly: LucenePackageMapping("Lucene.Net.Benchmarks", "org.apache.lucene.benchmark")]
+[assembly: LucenePackageMapping("Lucene.Net.Benchmarks.ByTask", "org.apache.lucene.benchmark.byTask", Justification = "Casing difference from expected package")]
+[assembly: LucenePackageMapping("Lucene.Net.Benchmarks.ByTask.Feeds", "org.apache.lucene.benchmark.byTask.feeds", Justification = "Casing difference from expected package")]
+[assembly: LucenePackageMapping("Lucene.Net.Benchmarks.ByTask.Stats", "org.apache.lucene.benchmark.byTask.stats", Justification = "Casing difference from expected package")]
+[assembly: LucenePackageMapping("Lucene.Net.Benchmarks.ByTask.Tasks", "org.apache.lucene.benchmark.byTask.tasks", Justification = "Casing difference from expected package")]
+[assembly: LucenePackageMapping("Lucene.Net.Benchmarks.ByTask.Utils", "org.apache.lucene.benchmark.byTask.utils", Justification = "Casing difference from expected package")]

@@ -1,4 +1,5 @@
 ﻿using Lucene.Net.Index;
+using Lucene.Net.Reflection;
 using Lucene.Net.Support;
 using Lucene.Net.Util;
 using System;
@@ -34,6 +35,7 @@ namespace Lucene.Net.Search
     /// however, you might want to consider overriding all methods, in order to avoid
     /// a <see cref="NullReferenceException"/>.
     /// </summary>
+    [LuceneBaseTypeDifference("Uses ICollector interface instead of Collector abstract base class")]
     public abstract class TopDocsCollector<T> : ICollector, ITopDocsCollector where T : ScoreDoc
     {
         /// <summary>
