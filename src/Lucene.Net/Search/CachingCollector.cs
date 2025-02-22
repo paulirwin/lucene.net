@@ -1,4 +1,5 @@
-﻿using Lucene.Net.Support;
+﻿using Lucene.Net.Reflection;
+using Lucene.Net.Support;
 using System;
 using System.Collections.Generic;
 using JCG = J2N.Collections.Generic;
@@ -48,6 +49,7 @@ namespace Lucene.Net.Search
     ///
     /// @lucene.experimental
     /// </summary>
+    [LuceneBaseTypeDifference("Uses ICollector interface instead of Collector abstract base class")]
     public abstract class CachingCollector : ICollector
     {
         // Max out at 512K arrays

@@ -1,4 +1,5 @@
 ﻿using Lucene.Net.Index;
+using Lucene.Net.Reflection;
 using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
