@@ -237,6 +237,9 @@ on:
     # Dependencies$dependencyPaths
     - '!**/*.md'
 
+concurrency:
+  group: tests
+
 jobs:
 
   Test:

@@ -41,6 +41,9 @@ on:
     - 'websites/apidocs/**/*'
     - 'src/docs/LuceneDocsPlugins/**/*'
 
+concurrency:
+  group: documentation
+
 env:
   # If a tag is specified, the tag will be in the format: Docs_4_8_0_beta00013
   # Or if not tag is specified, the latest Lucene.Net_4_8_0_beta00013 release tag will be used
