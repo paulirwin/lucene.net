@@ -55,6 +55,9 @@ on:
 
     - '!**/*.md'
 
+concurrency:
+  group: tests
+
 jobs:
 
   Test:
