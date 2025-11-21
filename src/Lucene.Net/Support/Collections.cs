@@ -2,6 +2,7 @@ using J2N;
 using J2N.Collections.Generic.Extensions;
 using J2N.Collections.ObjectModel;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -176,7 +177,105 @@ namespace Lucene.Net.Support
             return new ReadOnlyDictionary<TKey, TValue>(dictionary);
         }
 
+        public static IList<T> NCopies<T>(int length, T @object)
+        {
+            return new CopiesList<T>(length, @object);
+        }
+
         #region Nested Types
+
+        #region CopiesList
+
+        private sealed class CopiesList<E> : IList<E>
+        {
+            private readonly int n;
+            private readonly E element;
+
+            public CopiesList(int length, E @object)
+            {
+                if (length < 0)
+                {
+                    throw new ArgumentException();
+                }
+
+                n = length;
+                element = @object;
+            }
+
+            public IEnumerator<E> GetEnumerator()
+            {
+                throw new NotImplementedException();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+            public void Add(E item)
+            {
+                throw new InvalidOperationException("This list is read-only.");
+            }
+
+            public void Clear()
+            {
+                throw new InvalidOperationException("This list is read-only.");
+            }
+
+            public bool Contains(E @object)
+            {
+                return element == null ? @object == null : element.Equals(@object);
+            }
+
+            public void CopyTo(E[] array, int arrayIndex)
+            {
+                for (int i = 0; i < n; i++)
+                {
+                    array[arrayIndex + i] = element;
+                }
+            }
+
+            public bool Remove(E item)
+            {
+                throw new InvalidOperationException("This list is read-only.");
+            }
+
+            public int Count => n;
+
+            public bool IsReadOnly => true;
+
+            public int IndexOf(E item)
+            {
+                if (Contains(item))
+                {
+                    return 0;
+                }
+                return -1;
+            }
+
+            public void Insert(int index, E item)
+            {
+                throw new InvalidOperationException("This list is read-only.");
+            }
+
+            public void RemoveAt(int index)
+            {
+                throw new InvalidOperationException("This list is read-only.");
+            }
+
+            public E this[int index]
+            {
+                get
+                {
+                    if (0 <= index && index < n)
+                    {
+                        return element;
+                    }
+
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                }
+                set => throw new InvalidOperationException("This list is read-only.");
+            }
+        }
+
+        #endregion
 
         #region ReverseComparer
 
@@ -238,5 +337,6 @@ namespace Lucene.Net.Support
         #endregion ReverseComparer2
 
         #endregion Nested Types
+
     }
 }

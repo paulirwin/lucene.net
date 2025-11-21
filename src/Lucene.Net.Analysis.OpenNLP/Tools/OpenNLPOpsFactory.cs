@@ -1,15 +1,11 @@
 // Lucene version compatibility level 8.2.0
 using Lucene.Net.Analysis.Util;
-using opennlp.tools.chunker;
-using opennlp.tools.lemmatizer;
-using opennlp.tools.namefind;
-using opennlp.tools.postag;
-using opennlp.tools.sentdetect;
-using opennlp.tools.tokenize;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using Opennlp.Tools.Chunker;
+using Opennlp.Tools.Lemmatizer;
 
 namespace Lucene.Net.Analysis.OpenNlp.Tools
 {
@@ -63,7 +59,7 @@ namespace Lucene.Net.Analysis.OpenNlp.Tools
             return sentenceModels.GetOrAdd(modelName, (modelName) =>
             {
                 using Stream resource = loader.OpenResource(modelName);
-                return new SentenceModel(new ikvm.io.InputStreamWrapper(resource));
+                return new SentenceModel(resource);
             });
         }
 
@@ -86,7 +82,7 @@ namespace Lucene.Net.Analysis.OpenNlp.Tools
             return tokenizerModels.GetOrAdd(modelName, (modelName) =>
             {
                 using Stream resource = loader.OpenResource(modelName);
-                return new TokenizerModel(new ikvm.io.InputStreamWrapper(resource));
+                return new TokenizerModel(resource);
             });
         }
 
@@ -102,7 +98,7 @@ namespace Lucene.Net.Analysis.OpenNlp.Tools
             return posTaggerModels.GetOrAdd(modelName, (modelName) =>
             {
                 using Stream resource = loader.OpenResource(modelName);
-                return new POSModel(new ikvm.io.InputStreamWrapper(resource));
+                return new POSModel(resource);
             });
         }
 
@@ -118,7 +114,7 @@ namespace Lucene.Net.Analysis.OpenNlp.Tools
             return chunkerModels.GetOrAdd(modelName, (modelName) =>
             {
                 using Stream resource = loader.OpenResource(modelName);
-                return new ChunkerModel(new ikvm.io.InputStreamWrapper(resource));
+                return new ChunkerModel(resource);
             });
         }
 
@@ -134,7 +130,7 @@ namespace Lucene.Net.Analysis.OpenNlp.Tools
             return nerModels.GetOrAdd(modelName, (modelName) =>
             {
                 using Stream resource = loader.OpenResource(modelName);
-                return new TokenNameFinderModel(new ikvm.io.InputStreamWrapper(resource));
+                return new TokenNameFinderModel(resource);
             });
         }
 
@@ -178,7 +174,7 @@ namespace Lucene.Net.Analysis.OpenNlp.Tools
             return lemmatizerModels.GetOrAdd(modelName, (modelName) =>
             {
                 using Stream resource = loader.OpenResource(modelName);
-                return new LemmatizerModel(new ikvm.io.InputStreamWrapper(resource));
+                return new LemmatizerModel(resource);
             });
         }
 

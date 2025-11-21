@@ -1,7 +1,6 @@
 // Lucene version compatibility level 8.2.0
 using Lucene.Net.Support.Threading;
-using opennlp.tools.tokenize;
-using opennlp.tools.util;
+using Span = Opennlp.Tools.Util.Span;
 
 namespace Lucene.Net.Analysis.OpenNlp.Tools
 {
