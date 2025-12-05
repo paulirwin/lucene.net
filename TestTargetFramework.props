@@ -54,7 +54,6 @@
 
   <PropertyGroup Label="Mismatched Target Framework (to override the target framework under test)">
     <SetTargetFramework></SetTargetFramework>
-    <SetTargetFramework Condition=" '$(TargetFramework)' == 'net9.0' ">TargetFramework=net8.0</SetTargetFramework>
     <SetTargetFramework Condition=" '$(TargetFramework)' == 'net472' ">TargetFramework=netstandard2.0</SetTargetFramework>
   </PropertyGroup>
 
