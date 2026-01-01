@@ -70,7 +70,7 @@ steps:
 #  displayName: 'Validate Template Parameters'
 
 
-# Special case: Only supports .NET Standard 1.3
+# Special case: Only supports .NET Standard 1.3 (we only need to test this on one framework because it is for VS)
 - template: publish-test-results.yml
   parameters:
     testProjectName: 'Lucene.Net.Tests.CodeAnalysis'
@@ -81,23 +81,12 @@ steps:
     testResultsArtifactName: '${{ parameters.testResultsArtifactName }}'
     testResultsFileName: '${{ parameters.testResultsFileName }}'
 
-# Special case: Only supports net8.0
+# Special case: Only supports net10.0 and net8.0
+
 - template: publish-test-results.yml
   parameters:
     testProjectName: 'Lucene.Net.Tests.Cli'
-    framework: 'net8.0' # Since condtions are not supported for templates, we check for the file existence within publish-test-results.yml
-    vsTestPlatform: '${{ parameters.vsTestPlatform }}'
-    osName: '${{ parameters.osName }}'
-    testResultsFormat: '${{ parameters.testResultsFormat }}'
-    testResultsArtifactName: '${{ parameters.testResultsArtifactName }}'
-    testResultsFileName: '${{ parameters.testResultsFileName }}'
-
-# Special case: Only supports net8.0 and net48
-
-- template: publish-test-results.yml
-  parameters:
-    testProjectName: 'Lucene.Net.Tests.Analysis.OpenNLP'
-    framework: 'net8.0' # Since condtions are not supported for templates, we check for the file existence within publish-test-results.yml
+    framework: 'net10.0' # Since conditions are not supported for templates, we check for the file existence within publish-test-results.yml
     vsTestPlatform: '${{ parameters.vsTestPlatform }}'
     osName: '${{ parameters.osName }}'
     testResultsFormat: '${{ parameters.testResultsFormat }}'
@@ -106,8 +95,40 @@ steps:
 
 - template: publish-test-results.yml
   parameters:
+    testProjectName: 'Lucene.Net.Tests.Cli'
+    framework: 'net8.0' # Since conditions are not supported for templates, we check for the file existence within publish-test-results.yml
+    vsTestPlatform: '${{ parameters.vsTestPlatform }}'
+    osName: '${{ parameters.osName }}'
+    testResultsFormat: '${{ parameters.testResultsFormat }}'
+    testResultsArtifactName: '${{ parameters.testResultsArtifactName }}'
+    testResultsFileName: '${{ parameters.testResultsFileName }}'
+
+# Special case: Only supports net10.0, net8.0 and net48
+
+- template: publish-test-results.yml
+  parameters:
     testProjectName: 'Lucene.Net.Tests.Analysis.OpenNLP'
-    framework: 'net48' # Since condtions are not supported for templates, we check for the file existence within publish-test-results.yml
+    framework: 'net10.0' # Since conditions are not supported for templates, we check for the file existence within publish-test-results.yml
+    vsTestPlatform: '${{ parameters.vsTestPlatform }}'
+    osName: '${{ parameters.osName }}'
+    testResultsFormat: '${{ parameters.testResultsFormat }}'
+    testResultsArtifactName: '${{ parameters.testResultsArtifactName }}'
+    testResultsFileName: '${{ parameters.testResultsFileName }}'
+
+- template: publish-test-results.yml
+  parameters:
+    testProjectName: 'Lucene.Net.Tests.Analysis.OpenNLP'
+    framework: 'net8.0' # Since conditions are not supported for templates, we check for the file existence within publish-test-results.yml
+    vsTestPlatform: '${{ parameters.vsTestPlatform }}'
+    osName: '${{ parameters.osName }}'
+    testResultsFormat: '${{ parameters.testResultsFormat }}'
+    testResultsArtifactName: '${{ parameters.testResultsArtifactName }}'
+    testResultsFileName: '${{ parameters.testResultsFileName }}'
+
+- template: publish-test-results.yml
+  parameters:
+    testProjectName: 'Lucene.Net.Tests.Analysis.OpenNLP'
+    framework: 'net48' # Since conditions are not supported for templates, we check for the file existence within publish-test-results.yml
     vsTestPlatform: '${{ parameters.vsTestPlatform }}'
     osName: '${{ parameters.osName }}'
     testResultsFormat: '${{ parameters.testResultsFormat }}'
