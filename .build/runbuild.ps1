@@ -270,7 +270,7 @@ task Test -depends CheckSDK, UpdateLocalSDKVersion, Restore -description "This t
         $testName = $testProject.Directory.Name
 
         # Call the target to get the configured test frameworks for this project. We only read the first line because MSBuild adds extra output.
-        $frameworksString = $(dotnet build "$testProject" --verbosity minimal --nologo --no-restore /t:PrintTargetFrameworks /p:TestProjectsOnly=true /p:TestFrameworks=true)[0].Trim()
+        $frameworksString = Get-SupportedTargetFrameworksString $testProject
 
         Write-Host ""
         Write-Host "Frameworks To Test for ${testProject}: $frameworksString" -ForegroundColor Yellow
@@ -417,10 +417,19 @@ function Get-Version() {
 
 function Get-FrameworksToTest() {
     # Call the target to get the configured test frameworks for a project known to contain all of them. We only read the first line because MSBuild adds extra output.
-    $frameworksString = $(dotnet build "$projectWithAllTestFrameworks" --verbosity minimal --nologo --no-restore /t:PrintTargetFrameworks /p:TestProjectsOnly=true /p:TestFrameworks=true)[0].Trim()
+    $frameworksString = Get-SupportedTargetFrameworksString -ProjectPath $projectWithAllTestFrameworks
     $frameworksToTest = $frameworksString -split '\s*;\s*'
     Assert($frameworksToTest.Length -gt 0) "The project at $(Normalize-FileSystemSlashes "$projectWithAllTestFrameworks") contains no target frameworks. Please configure a project that includes all testable target frameworks."
     return $frameworksToTest
+}
+
+function Get-SupportedTargetFrameworksString([Parameter(Mandatory)][string] $ProjectPath) {
+    # NOTE: This will not appear when run directly in the console with minimal verbosity. MSBuild only produces the output when using a pipe, which is what we are doing here.
+    $output = dotnet build "$ProjectPath" --verbosity minimal --nologo --no-restore /t:PrintTargetFrameworks /p:TestProjectsOnly=true /p:TestFrameworks=true 2>&1 | Out-String
+    if ($output -match 'SupportedTargetFrameworks=([^\s]+)') {
+        return $matches[1]
+    }
+    throw "Failed to determine supported target frameworks for project: $ProjectPath"
 }
 
 function Prepare-For-Build() {

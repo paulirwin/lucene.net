@@ -141,6 +141,15 @@ function Get-ProjectPathDirectories([string]$ProjectPath, [string]$RelativeRoot,
     }
 }
 
+function Get-SupportedTargetFrameworksString([Parameter(Mandatory)][string] $ProjectPath) {
+    # NOTE: This will not appear when run directly in the console with minimal verbosity. MSBuild only produces the output when using a pipe, which is what we are doing here.
+    $output = dotnet build "$ProjectPath" --verbosity minimal --nologo --no-restore /t:PrintTargetFrameworks /p:TestProjectsOnly=true /p:TestFrameworks=true 2>&1 | Out-String
+    if ($output -match 'SupportedTargetFrameworks=([^\s]+)') {
+        return $matches[1]
+    }
+    throw "Failed to determine supported target frameworks for project: $ProjectPath"
+}
+
 function Ensure-Directory-Exists([string] $path) {
     if (!(Test-Path $path)) {
         New-Item $path -ItemType Directory
@@ -373,8 +382,8 @@ try {
 foreach ($testProject in $TestProjects) {
     $projectName = [System.IO.Path]::GetFileNameWithoutExtension($testProject)
 
-     # Call the target to get the configured test frameworks for this project. We only read the first line because MSBuild adds extra output.
-    $frameworksString = $(dotnet build "$testProject" --verbosity minimal --nologo --no-restore /t:PrintTargetFrameworks /p:TestProjectsOnly=true /p:TestFrameworks=true)[0].Trim()
+     # Call the target to get the configured test frameworks for this project.
+    $frameworksString = Get-SupportedTargetFrameworksString $testProject
 
     if ($frameworksString -eq 'none') {
         Write-Host "WARNING: Skipping project '$projectName' because it is not marked with `<IsTestProject`>true`<`/IsTestProject`> and/or it contains no test frameworks for the current environment." -ForegroundColor Yellow
