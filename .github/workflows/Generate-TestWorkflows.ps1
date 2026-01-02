@@ -362,7 +362,10 @@ jobs:
     Ensure-Directory-Exists $OutputDirectory
 
     Write-Host "Generating workflow file: $FilePath"
-    Out-File -filePath $FilePath -encoding UTF8 -inputObject $fileText
+
+    # Ensure the file does not get generated with a BOM
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($FilePath, $fileText, $utf8NoBom)
 
     #Write-Host $fileText
 }
