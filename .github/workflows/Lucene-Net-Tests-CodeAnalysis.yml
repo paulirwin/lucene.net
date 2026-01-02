@@ -50,7 +50,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest]
-        framework: [net10.0]
+        framework: [net8.0]
         platform: [x64]
         configuration: [Release]
         exclude:
@@ -135,4 +135,3 @@ jobs:
           if (Test-Path $md_file) {
               Get-Content $md_file | Add-Content $env:GITHUB_STEP_SUMMARY
           }
-

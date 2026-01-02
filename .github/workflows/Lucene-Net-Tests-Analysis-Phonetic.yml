@@ -136,4 +136,3 @@ jobs:
           if (Test-Path $md_file) {
               Get-Content $md_file | Add-Content $env:GITHUB_STEP_SUMMARY
           }
-
