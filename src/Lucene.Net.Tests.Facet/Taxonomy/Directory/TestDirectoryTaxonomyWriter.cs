@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using Assert = Lucene.Net.TestFramework.Assert;
 using System.Threading;
 
 namespace Lucene.Net.Facet.Taxonomy.Directory

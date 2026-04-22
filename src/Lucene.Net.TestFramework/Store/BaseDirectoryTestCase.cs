@@ -10,6 +10,7 @@ using RandomizedTesting.Generators;
 using System;
 using System.IO;
 using System.Threading;
+using Assert = Lucene.Net.TestFramework.Assert;
 using Test = NUnit.Framework.TestAttribute;
 
 namespace Lucene.Net.Store
