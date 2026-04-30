@@ -55,6 +55,20 @@ namespace Lucene.Net.Store
     /// To exit parallel tasks safely, we recommend using <see cref="System.Threading.Tasks.Task"/>s
     /// and "interrupt" them with <see cref="System.Threading.CancellationToken"/>s.</font>
     /// </summary>
+    // === DIAGNOSTIC TRACING for issue #1267 (write.lock / .cfs handle leak) ===
+    internal static class MMapTrace
+    {
+        private static int _seq;
+        public static int NextId() => System.Threading.Interlocked.Increment(ref _seq);
+        public static void Log(string message)
+        {
+            // Filter on FreeTextSuggester paths so we don't drown in unrelated output
+            // when the test framework opens unrelated files.
+            System.Console.Error.WriteLine($"[mmaptrace t{Environment.CurrentManagedThreadId}] {message}");
+        }
+    }
+    // === END DIAGNOSTIC TRACING ===
+
     public class MMapDirectory : FSDirectory
     {
         // LUCENENET specific - unmap hack not needed
@@ -188,6 +202,7 @@ namespace Lucene.Net.Store
         {
             EnsureOpen();
             var file = Path.Combine(Directory.FullName, name); // LUCENENET specific: changed to use string file name instead of allocating a FileInfo (#832)
+            MMapTrace.Log($"OpenInput name={name}");
             // LUCENENET specific: a fresh SharedMapping per OpenInput call.
             // Matches upstream Java (openInput creates a new FileChannel +
             // fc.map()) and ensures Length reflects the file's current size.
@@ -207,6 +222,7 @@ namespace Lucene.Net.Store
         {
             EnsureOpen();
             var file = Path.Combine(Directory.FullName, name);
+            MMapTrace.Log($"CreateSlicer name={name}");
             SharedMapping mapping = SharedMapping.Create(file, chunkSizePower);
             try
             {
@@ -284,7 +300,11 @@ namespace Lucene.Net.Store
 
             protected override void Dispose(bool disposing)
             {
-                if (0 != Interlocked.CompareExchange(ref this.disposed, 1, 0)) return; // LUCENENET specific - allow double-dispose
+                if (0 != Interlocked.CompareExchange(ref this.disposed, 1, 0))
+                {
+                    MMapTrace.Log($"Slicer mappingId={mapping.Id} Dispose IGNORED (already disposed)");
+                    return; // LUCENENET specific - allow double-dispose
+                }
 
                 if (disposing)
                 {
@@ -295,10 +315,17 @@ namespace Lucene.Net.Store
                         issuedSlices.Clear();
                     }
 
+                    MMapTrace.Log($"Slicer mappingId={mapping.Id} Dispose START — disposing {toDispose.Length} slices");
                     IOUtils.DisposeWhileHandlingException(toDispose);
 
                     // Slicer owns the mapping; tear it down.
+                    MMapTrace.Log($"Slicer mappingId={mapping.Id} Dispose -> mapping.Dispose()");
                     mapping.Dispose();
+                    MMapTrace.Log($"Slicer mappingId={mapping.Id} Dispose END");
+                }
+                else
+                {
+                    MMapTrace.Log($"Slicer mappingId={mapping.Id} Dispose(false) — FINALIZER path");
                 }
             }
         }
@@ -440,6 +467,8 @@ namespace Lucene.Net.Store
             /// the root returned from <see cref="MMapDirectory.OpenInput(string, IOContext)"/>;
             /// slices issued from a slicer and clones must pass <c>false</c>.
             /// </summary>
+            internal readonly int InputId;
+
             internal MMapIndexInput(string resourceDescription,
                 bool ownsMapping, SharedMapping mapping,
                 long offset, long length, int chunkSizePower)
@@ -450,6 +479,8 @@ namespace Lucene.Net.Store
                 this.baseOffset = offset;
                 this.length = length;
                 this.chunkSizePower = chunkSizePower;
+                this.InputId = MMapTrace.NextId();
+                MMapTrace.Log($"MMapIndexInput#{InputId} CTOR isRoot={ownsMapping} mappingId={mapping.Id} path={System.IO.Path.GetFileName(mapping.Path)} offset={offset} length={length}");
             }
 
             public override long Length => length;
@@ -685,6 +716,9 @@ namespace Lucene.Net.Store
                 clone.currentStart = 0;
                 clone.currentEnd = 0;
                 clone.currentChunkOwnerThreadId = 0;
+                // We can't easily set a new InputId on `clone` since it's a memberwise copy.
+                // So clone retains parent's InputId — log the clone fact instead.
+                MMapTrace.Log($"MMapIndexInput#{InputId} CLONE (clone shares this id; mappingId={mapping.Id})");
                 return clone;
             }
 
@@ -692,13 +726,16 @@ namespace Lucene.Net.Store
             {
                 if (!disposing)
                 {
+                    MMapTrace.Log($"MMapIndexInput#{InputId} Dispose(false) — FINALIZER path mappingId={mapping.Id} isRoot={isRoot}");
                     return;
                 }
                 // Mark this instance closed. Idempotent.
                 if (Interlocked.CompareExchange(ref instanceClosed, 1, 0) != 0)
                 {
+                    MMapTrace.Log($"MMapIndexInput#{InputId} Dispose IGNORED (already closed) isRoot={isRoot}");
                     return;
                 }
+                MMapTrace.Log($"MMapIndexInput#{InputId} Dispose START isRoot={isRoot} mappingId={mapping.Id} path={System.IO.Path.GetFileName(mapping.Path)}");
                 // Cross-thread Dispose safety: only release the chunk rent
                 // if Dispose runs on the same thread that acquired it.
                 // Otherwise (e.g. slicer.Dispose disposing slices being read
@@ -731,7 +768,12 @@ namespace Lucene.Net.Store
                 // instance's closed flag.
                 if (isRoot)
                 {
+                    MMapTrace.Log($"MMapIndexInput#{InputId} Dispose -> mapping.Dispose() (isRoot=true) mappingId={mapping.Id}");
                     mapping.Dispose();
+                }
+                else
+                {
+                    MMapTrace.Log($"MMapIndexInput#{InputId} Dispose END (NOT root, mapping not disposed) mappingId={mapping.Id}");
                 }
             }
         }
@@ -755,12 +797,17 @@ namespace Lucene.Net.Store
             /// </summary>
             private readonly MemoryMappedFile? memoryMappedFile;
             private int disposed;
+            internal readonly int Id;
+            internal readonly string Path;
 
-            private SharedMapping(MemoryMappedFile? mmf, Chunk[] chunks, long length)
+            private SharedMapping(MemoryMappedFile? mmf, Chunk[] chunks, long length, string path)
             {
                 this.memoryMappedFile = mmf;
                 this.Chunks = chunks;
                 this.Length = length;
+                this.Id = MMapTrace.NextId();
+                this.Path = path;
+                MMapTrace.Log($"SharedMapping#{Id} CTOR path={System.IO.Path.GetFileName(path)} chunks={chunks.Length} length={length}");
             }
 
             internal static SharedMapping Create(string file, int chunkSizePower)
@@ -779,7 +826,7 @@ namespace Lucene.Net.Store
                 long length = new FileInfo(file).Length;
                 if (length == 0)
                 {
-                    return new SharedMapping(mmf: null, chunks: Array.Empty<Chunk>(), length: 0);
+                    return new SharedMapping(mmf: null, chunks: Array.Empty<Chunk>(), length: 0, path: file);
                 }
 
                 MemoryMappedFile? mmf = null;
@@ -797,7 +844,7 @@ namespace Lucene.Net.Store
                         capacity: 0,
                         access: MemoryMappedFileAccess.Read);
                     chunks = MapChunks(mmf, 0, length, chunkSizePower);
-                    return new SharedMapping(mmf, chunks, length);
+                    return new SharedMapping(mmf, chunks, length, file);
                 }
                 catch
                 {
@@ -812,9 +859,15 @@ namespace Lucene.Net.Store
             /// </summary>
             public void Dispose()
             {
-                if (Interlocked.CompareExchange(ref disposed, 1, 0) != 0) return;
+                if (Interlocked.CompareExchange(ref disposed, 1, 0) != 0)
+                {
+                    MMapTrace.Log($"SharedMapping#{Id} Dispose IGNORED (already disposed) path={System.IO.Path.GetFileName(Path)}");
+                    return;
+                }
+                MMapTrace.Log($"SharedMapping#{Id} Dispose START path={System.IO.Path.GetFileName(Path)}");
                 DisposeChunks(Chunks);
                 IOUtils.DisposeWhileHandlingException(memoryMappedFile);
+                MMapTrace.Log($"SharedMapping#{Id} Dispose END path={System.IO.Path.GetFileName(Path)}");
             }
 
             internal Chunk[] Chunks { get; }
