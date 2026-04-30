@@ -100,6 +100,9 @@ namespace Lucene.Net.Store
         {
             EnsureOpen();
             var path = Path.Combine(Directory.FullName, name); // LUCENENET specific: changed to use string file name instead of allocating a FileInfo (#832)
+            // LUCENENET NOTE: FileShare Read+Write matches Java Lucene.
+            // In Java, RandomAccessFile defaults to this behavior.
+            // LUCENENET TODO: Determine if we should add Delete as well. See issue #1283
             var raf = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             return new SimpleFSIndexInput("SimpleFSIndexInput(path=\"" + path + "\")", raf, context);
         }
@@ -108,6 +111,9 @@ namespace Lucene.Net.Store
         {
             EnsureOpen();
             var file = Path.Combine(Directory.FullName, name); // LUCENENET specific: changed to use string file name instead of allocating a FileInfo (#832)
+            // LUCENENET NOTE: FileShare Read+Write matches Java Lucene.
+            // In Java, RandomAccessFile defaults to this behavior.
+            // LUCENENET TODO: Determine if we should add Delete as well. See issue #1283
             var descriptor = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             return new IndexInputSlicerAnonymousClass(context, file, descriptor);
         }
