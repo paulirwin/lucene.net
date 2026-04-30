@@ -394,6 +394,16 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                         var pid = System.Diagnostics.Process.GetCurrentProcess().Id;
                         Console.Error.WriteLine($"[diag] pid={pid} tempDir={tempIndexPath.FullName}");
 
+                        // Force a full GC + wait for finalizers, then probe again.
+                        // If the leak is just GC-pending (something not deterministically
+                        // disposed but reachable only via finalizer), this round-trip
+                        // will release the handles. If the locks persist after GC,
+                        // we have a real reachability bug — something is still rooted.
+                        Console.Error.WriteLine("[diag] forcing GC + finalizers");
+                        GC.Collect();
+                        GC.WaitForPendingFinalizers();
+                        GC.Collect();
+
                         // List every file in the temp dir so we know what could be holding the delete back.
                         foreach (var f in System.IO.Directory.GetFiles(tempIndexPath.FullName))
                         {
