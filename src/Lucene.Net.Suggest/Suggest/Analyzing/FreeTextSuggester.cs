@@ -385,6 +385,73 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 }
                 finally
                 {
+                    // === TEMPORARY DIAGNOSTIC for issue #1267 (PR review L772) ===
+                    // Probe the state of write.lock and the rest of the temp index
+                    // directory just before the recursive delete. Goal: figure out
+                    // which file is actually locked, by what kind of opener.
+                    try
+                    {
+                        var pid = System.Diagnostics.Process.GetCurrentProcess().Id;
+                        Console.Error.WriteLine($"[diag] pid={pid} tempDir={tempIndexPath.FullName}");
+
+                        // List every file in the temp dir so we know what could be holding the delete back.
+                        foreach (var f in System.IO.Directory.GetFiles(tempIndexPath.FullName))
+                        {
+                            Console.Error.WriteLine($"[diag]   file: {Path.GetFileName(f)} size={new FileInfo(f).Length}");
+                        }
+
+                        var lockPath = Path.Combine(tempIndexPath.FullName, "write.lock");
+
+                        // Probe 1: can we open write.lock with FileShare.Read? If yes, no one is holding it
+                        // with a more-restrictive share mode (none). If no, *someone* has it more exclusively.
+                        try
+                        {
+                            using var fs = new FileStream(lockPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                            Console.Error.WriteLine("[diag] OpenRead(FileShare.Read) on write.lock: OK");
+                        }
+                        catch (Exception e) { Console.Error.WriteLine($"[diag] OpenRead(FileShare.Read) on write.lock FAILED: {e.GetType().Name}: {e.Message}"); }
+
+                        // Probe 2: can we open write.lock with FileShare.Read|Delete? Only meaningful if Probe 1 succeeded.
+                        try
+                        {
+                            using var fs = new FileStream(lockPath, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
+                            Console.Error.WriteLine("[diag] OpenRead(FileShare.Read|Delete) on write.lock: OK");
+                        }
+                        catch (Exception e) { Console.Error.WriteLine($"[diag] OpenRead(FileShare.Read|Delete) on write.lock FAILED: {e.GetType().Name}: {e.Message}"); }
+
+                        // Probe 3: try File.Delete on write.lock directly. If THIS fails with sharing violation,
+                        // some opener holds a handle without FileShare.Delete in its share set.
+                        try
+                        {
+                            File.Delete(lockPath);
+                            Console.Error.WriteLine($"[diag] File.Delete(write.lock): OK; still exists? {File.Exists(lockPath)}");
+                        }
+                        catch (Exception e) { Console.Error.WriteLine($"[diag] File.Delete(write.lock) FAILED: {e.GetType().Name}: {e.Message}"); }
+
+                        // Probe 4: try direct File.Delete on each remaining file individually,
+                        // so we learn whether the issue is *only* write.lock or also segment files.
+                        if (System.IO.Directory.Exists(tempIndexPath.FullName))
+                        {
+                            foreach (var f in System.IO.Directory.GetFiles(tempIndexPath.FullName))
+                            {
+                                try
+                                {
+                                    File.Delete(f);
+                                    Console.Error.WriteLine($"[diag] File.Delete({Path.GetFileName(f)}): OK");
+                                }
+                                catch (Exception e)
+                                {
+                                    Console.Error.WriteLine($"[diag] File.Delete({Path.GetFileName(f)}) FAILED: {e.GetType().Name}: {e.Message}");
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception diagEx)
+                    {
+                        Console.Error.WriteLine($"[diag] diagnostics block threw: {diagEx}");
+                    }
+                    // === END DIAGNOSTIC ===
+
                     // LUCENENET specific - since we are removing the entire directory anyway,
                     // it doesn't make sense to first do a loop in order remove the files.
                     // Let the System.IO.Directory.Delete() method handle that.

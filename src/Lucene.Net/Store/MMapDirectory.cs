@@ -7,7 +7,6 @@ using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 using SCG = System.Collections.Generic;
 
@@ -195,7 +194,7 @@ namespace Lucene.Net.Store
             SharedMapping mapping = SharedMapping.Create(file, chunkSizePower);
             try
             {
-                return new MMapIndexInput($"MMapIndexInput(path=\"{file}\")", ownsMapping: true, mapping, 0, mapping.Length, chunkSizePower);
+                return new MMapIndexInput("MMapIndexInput(path=\"" + file + "\")", ownsMapping: true, mapping, 0, mapping.Length, chunkSizePower);
             }
             catch
             {
@@ -257,7 +256,7 @@ namespace Lucene.Net.Store
                 // Slices reference the slicer's mapping; only the slicer
                 // itself owns the mapping and will dispose it.
                 var input = new MMapIndexInput(
-                    $"MMapIndexInput({sliceDescription} in path=\"{file}\" slice={offset}:{offset + length})", ownsMapping: false, mapping,
+                    "MMapIndexInput(" + sliceDescription + " in path=\"" + file + "\" slice=" + offset + ":" + (offset + length) + ")", ownsMapping: false, mapping,
                     offset, length,
                     outerInstance.chunkSizePower);
                 lock (issuedSlicesLock)
@@ -521,13 +520,7 @@ namespace Lucene.Net.Store
                     position = pos + 2;
                     return v;
                 }
-                // Slow path: 2 bytes straddle a chunk boundary. Fill via
-                // ReadBytes (which handles the crossing) and decode big-endian
-                // to match the fast path. Avoids the 2× virtcall round-trip
-                // through base.ReadInt16 -> ReadByte.
-                Span<byte> buf = stackalloc byte[2];
-                ReadBytes(buf);
-                return BinaryPrimitives.ReadInt16BigEndian(buf);
+                return base.ReadInt16();
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -541,10 +534,7 @@ namespace Lucene.Net.Store
                     position = pos + 4;
                     return v;
                 }
-                // Slow path: see ReadInt16.
-                Span<byte> buf = stackalloc byte[4];
-                ReadBytes(buf);
-                return BinaryPrimitives.ReadInt32BigEndian(buf);
+                return base.ReadInt32();
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -558,109 +548,44 @@ namespace Lucene.Net.Store
                     position = pos + 8;
                     return v;
                 }
-                // Slow path: see ReadInt16.
-                Span<byte> buf = stackalloc byte[8];
-                ReadBytes(buf);
-                return BinaryPrimitives.ReadInt64BigEndian(buf);
+                return base.ReadInt64();
             }
 
             public override void ReadBytes(byte[] b, int offset, int len)
             {
-                if (b is null)
-                {
-                    throw new ArgumentNullException(nameof(b));
-                }
-                if ((uint)offset > (uint)b.Length || (uint)len > (uint)(b.Length - offset))
-                {
-                    throw new ArgumentOutOfRangeException(nameof(offset),
-                        $"offset/len out of range: offset={offset}, len={len}, b.Length={b.Length}");
-                }
-                if (len == 0) return;
-
-                ReadBytesCore(ref b[offset], len);
+                ReadBytes(new Span<byte>(b, offset, len));
             }
 
             public override void ReadBytes(Span<byte> destination)
-            {
-                int len = destination.Length;
-                if (len == 0) return;
-
-                ReadBytesCore(ref MemoryMarshal.GetReference(destination), len);
-            }
-
-            // Shared inner loop for both ReadBytes overloads. Takes a raw
-            // ref + length so the byte[] path doesn't pay for a Span ctor +
-            // GetReference round-trip, and the per-iteration slice/GetReference
-            // pair is replaced with a single Unsafe.Add.
-            //
-            // The byte[] overload is responsible for its own bounds checking
-            // (Span's ctor checks for free; here we have to do it manually).
-            private void ReadBytesCore(ref byte destination, int length)
             {
                 if (Volatile.Read(ref instanceClosed) != 0)
                 {
                     throw AlreadyClosedException.Create(this.GetType().FullName, "Already disposed: " + this);
                 }
 
+                int len = destination.Length;
+                if (len == 0) return;
+
                 long pos = position;
-                if (pos + length > this.length)
+                if (pos + len > length)
                 {
                     throw EOFException.Create("read past EOF: " + this);
                 }
 
-                int remaining = length;
                 int dstOff = 0;
-
-                while (remaining > 0)
+                while (len > 0)
                 {
                     if (pos >= currentEnd)
                     {
                         EnsureCurrentChunk(pos);
                     }
-
-                    long available = currentEnd - pos;
-                    int inChunk = (int)(available < remaining ? available : remaining);
-
+                    int inChunk = (int)Math.Min(currentEnd - pos, (long)len);
                     ref byte src = ref Unsafe.AsRef<byte>(readBase + pos);
-                    ref byte dst = ref Unsafe.Add(ref destination, dstOff);
-
-                    // Small-copy fast path (≤ 8 bytes). Unsafe.CopyBlockUnaligned
-                    // has nontrivial entry overhead for tiny copies; using a
-                    // sized read/write avoids it for the common short-read case
-                    // (e.g., the slow path of ReadInt16/Int32/Int64).
-                    if (inChunk <= 8)
-                    {
-                        switch (inChunk)
-                        {
-                            case 8:
-                                Unsafe.WriteUnaligned(ref dst, Unsafe.ReadUnaligned<ulong>(ref src));
-                                break;
-                            case 4:
-                                Unsafe.WriteUnaligned(ref dst, Unsafe.ReadUnaligned<uint>(ref src));
-                                break;
-                            case 2:
-                                Unsafe.WriteUnaligned(ref dst, Unsafe.ReadUnaligned<ushort>(ref src));
-                                break;
-                            case 1:
-                                dst = src;
-                                break;
-                            default:
-                                // 3, 5, 6, 7 — uncommon; fall through to byte loop.
-                                for (int i = 0; i < inChunk; i++)
-                                {
-                                    Unsafe.Add(ref dst, i) = Unsafe.Add(ref src, i);
-                                }
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        Unsafe.CopyBlockUnaligned(ref dst, ref src, (uint)inChunk);
-                    }
-
+                    ref byte dst = ref System.Runtime.InteropServices.MemoryMarshal.GetReference(destination.Slice(dstOff));
+                    Unsafe.CopyBlockUnaligned(ref dst, ref src, (uint)inChunk);
                     pos += inChunk;
                     dstOff += inChunk;
-                    remaining -= inChunk;
+                    len -= inChunk;
                 }
                 position = pos;
             }
@@ -701,7 +626,7 @@ namespace Lucene.Net.Store
                 }
 
                 long chunkFileStart = (long)chunkIdx << chunkSizePower;
-                long chunkFileEnd = chunkFileStart + chunk.Length;
+                long chunkFileEnd = chunkFileStart + chunk.length;
                 // Slice-relative interval = chunk's file interval clipped to
                 // [baseOffset, baseOffset + length] and translated.
                 long sliceFileEnd = baseOffset + length;
@@ -712,10 +637,10 @@ namespace Lucene.Net.Store
                 // Precompute readBase so ReadByte/ReadInt* fast-path is
                 // a single load: *(readBase + pos). Algebraically, the
                 // file address of slice byte `pos` is
-                //   chunk.BasePtr + (baseOffset + pos - chunkFileStart)
-                // = (chunk.BasePtr + baseOffset - chunkFileStart) + pos
+                //   chunk.basePtr + (baseOffset + pos - chunkFileStart)
+                // = (chunk.basePtr + baseOffset - chunkFileStart) + pos
                 //                ^------- readBase ----^
-                readBase = chunk.BasePtr + (baseOffset - chunkFileStart);
+                readBase = chunk.basePtr + (baseOffset - chunkFileStart);
                 currentStart = start;
                 currentEnd = end;
                 currentChunkOwnerThreadId = Environment.CurrentManagedThreadId;
@@ -840,83 +765,45 @@ namespace Lucene.Net.Store
 
             internal static SharedMapping Create(string file, int chunkSizePower)
             {
-                // We open our own FileStream so we control the FileShare
-                // flags. The path-based CreateFromFile overload internally
-                // opens with FileShare.Read, which on Windows blocks
-                // attempts to delete or write to this file while we have
-                // it mapped — breaking callers (e.g. FreeTextSuggester)
-                // that build a temp index, dispose the directory, and
-                // immediately recursively delete the directory. We need
-                // FileShare.Delete in particular: on Windows, a delete
-                // attempt against an open file fails unless the open
-                // share-mode permits FILE_SHARE_DELETE.
-                //
-                // bufferSize: 1 because MemoryMappedFile uses only the
-                // file handle and bypasses the FileStream buffer, so a
-                // 4 KiB default buffer would just be allocated and
-                // immediately discarded.
-                FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read,
-                    FileShare.ReadWrite | FileShare.Delete,
-                    bufferSize: 1, FileOptions.RandomAccess);
+                // We don't track a separate FileStream: the path-based
+                // CreateFromFile overload opens its own handle and
+                // disposes it with the MemoryMappedFile. We capture the
+                // file length once via FileInfo for our own snapshot
+                // (used as the slice/range upper bound). Any divergence
+                // between this snapshot and the framework's internal
+                // stat — e.g. the file growing in between, formerly the
+                // #1090 race — is harmless: the mmap itself is sized by
+                // the framework's own stat, and our `length` is treated
+                // as a snapshot at open time (matching upstream Java's
+                // fc.size() snapshot semantics).
+                long length = new FileInfo(file).Length;
+                if (length == 0)
+                {
+                    return new SharedMapping(mmf: null, chunks: Array.Empty<Chunk>(), length: 0);
+                }
+
                 MemoryMappedFile? mmf = null;
                 Chunk[]? chunks = null;
-                Exception? priorException = null;
                 try
                 {
-                    long length = fs.Length;
-                    if (length == 0)
-                    {
-                        // CreateViewAccessor rejects zero-length views and
-                        // CreateFromFile rejects capacity 0 on an empty file,
-                        // so handle this edge case ourselves. Dispose the
-                        // FileStream eagerly since there's no MMF to own it.
-                        // Route through DisposeWhileHandlingException so a
-                        // throwing Dispose doesn't escape this success path
-                        // (it would be misleading — we successfully built a
-                        // zero-length mapping).
-                        IOUtils.DisposeWhileHandlingException(fs);
-                        return new SharedMapping(mmf: null, chunks: Array.Empty<Chunk>(), length: 0);
-                    }
-
                     // capacity: 0 -> the framework uses the file's
                     // current size on disk, atomically with mapping
                     // creation. This eliminates the #1090 race window
                     // we previously had to retry around.
-                    // leaveOpen: false -> the MMF takes ownership of the
-                    // FileStream and disposes it on its own Dispose, so
-                    // we don't need to track it ourselves.
                     mmf = MemoryMappedFile.CreateFromFile(
-                        fileStream: fs,
+                        path: file,
+                        mode: FileMode.Open,
                         mapName: null,
                         capacity: 0,
-                        access: MemoryMappedFileAccess.Read,
-#if FEATURE_MEMORYMAPPEDFILESECURITY
-                        memoryMappedFileSecurity: null,
-#endif
-                        inheritability: HandleInheritability.None,
-                        leaveOpen: false);
+                        access: MemoryMappedFileAccess.Read);
                     chunks = MapChunks(mmf, 0, length, chunkSizePower);
                     return new SharedMapping(mmf, chunks, length);
                 }
-                catch (Exception e) when (e.IsThrowable())
+                catch
                 {
-                    priorException = e;
+                    DisposeChunks(chunks);
+                    mmf?.Dispose();
                     throw;
-                }
-                finally
-                {
-                    if (priorException != null)
-                    {
-                        // Cleanup must not mask priorException. DisposeChunks
-                        // swallows internally, so chunk teardown is safe.
-                        // For the mmf/fs the priorException overload attaches
-                        // any Dispose failure as a suppressed exception and
-                        // rethrows the original.
-                        // mmf owns fs once CreateFromFile returned (leaveOpen:
-                        // false); if mmf is null, fs ownership is still ours.
-                        DisposeChunks(chunks);
-                        IOUtils.DisposeWhileHandlingException(priorException, (IDisposable?)mmf ?? fs);
-                    }
                 }
             }
 
@@ -964,28 +851,16 @@ namespace Lucene.Net.Store
                         long chunkOffset = offset + ((long)i << chunkSizePower);
                         long thisChunkLen = Math.Min(chunkSize, length - ((long)i << chunkSizePower));
 
-                        MemoryMappedViewAccessor accessor = mmf.CreateViewAccessor(chunkOffset, thisChunkLen, MemoryMappedFileAccess.Read);
+                        var accessor = mmf.CreateViewAccessor(chunkOffset, thisChunkLen, MemoryMappedFileAccess.Read);
                         byte* ptr = null;
-                        Exception? acquireException = null;
                         try
                         {
                             accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref ptr);
                         }
-                        catch (Exception e) when (e.IsThrowable())
+                        catch
                         {
-                            // Don't let accessor.Dispose() mask the original
-                            // AcquirePointer failure — route through the
-                            // priorException overload so any Dispose throw
-                            // becomes a suppressed exception on the original.
-                            acquireException = e;
+                            accessor.Dispose();
                             throw;
-                        }
-                        finally
-                        {
-                            if (acquireException != null)
-                            {
-                                IOUtils.DisposeWhileHandlingException(acquireException, accessor);
-                            }
                         }
                         // The accessor may be mapped at an offset inside the OS page,
                         // in which case PointerOffset is the distance from the
@@ -1043,7 +918,7 @@ namespace Lucene.Net.Store
         internal sealed unsafe class Chunk
         {
             private MemoryMappedViewAccessor? accessor;
-            internal readonly long Length;
+            internal readonly long length;
             // The chunk's base pointer (already adjusted for PointerOffset).
             // Stays valid until the last rent has been released AND Close
             // has run (whichever is later). Per-rent acquisition does NOT
@@ -1051,7 +926,7 @@ namespace Lucene.Net.Store
             // AcquirePointer (taken once in MapChunks) keeps the SafeBuffer
             // alive; the per-chunk inFlight count below is what defers the
             // matching ReleasePointer.
-            internal readonly byte* BasePtr;
+            internal readonly byte* basePtr;
 
             // Bit 0: closed flag. Bits 1..31: in-flight rent count. Packed
             // into a single int so closed-then-zero-rent can be observed
@@ -1067,13 +942,13 @@ namespace Lucene.Net.Store
             internal Chunk(MemoryMappedViewAccessor accessor, byte* basePtr, long length)
             {
                 this.accessor = accessor;
-                this.BasePtr = basePtr;
-                this.Length = length;
+                this.basePtr = basePtr;
+                this.length = length;
             }
 
             /// <summary>
             /// Acquire a rent on this chunk. Returns false if the chunk is
-            /// closed; otherwise the caller may dereference <see cref="BasePtr"/>
+            /// closed; otherwise the caller may dereference <see cref="basePtr"/>
             /// until it calls <see cref="Release"/>.
             /// </summary>
             public bool TryAcquire()
@@ -1142,12 +1017,9 @@ namespace Lucene.Net.Store
                 }
                 catch
                 {
-                    // Never propagate from cleanup. ReleaseNative runs from
-                    // the last reader's path or from Close, neither of which
-                    // has a meaningful way to surface a teardown failure
-                    // without masking real errors elsewhere.
+                    // Never propagate from cleanup.
                 }
-                IOUtils.DisposeWhileHandlingException(acc);
+                acc.Dispose();
             }
         }
     }
