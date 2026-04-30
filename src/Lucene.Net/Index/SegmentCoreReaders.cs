@@ -177,8 +177,11 @@ namespace Lucene.Net.Index
 
         internal void DecRef()
         {
-            if (@ref.DecrementAndGet() == 0)
+            int newRef = @ref.DecrementAndGet();
+            Lucene.Net.Store.MMapTrace.Log($"SegmentCoreReaders.DecRef refCount {newRef + 1}->{newRef} cfsReader=" + (cfsReader != null ? "yes" : "null"));
+            if (newRef == 0)
             {
+                Lucene.Net.Store.MMapTrace.Log("SegmentCoreReaders.DecRef -> hit zero, disposing cfsReader chain");
                 Exception th = null;
                 try
                 {
