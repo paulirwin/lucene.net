@@ -321,6 +321,7 @@ namespace Lucene.Net.Index
             }
 
             int rc = refCount.DecrementAndGet();
+            Lucene.Net.Store.MMapTrace.Log($"IndexReader.DecRef on {this.GetType().Name} refCount {rc + 1}->{rc}");
             if (rc == 0)
             {
                 closed = true;

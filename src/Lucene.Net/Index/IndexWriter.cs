@@ -607,12 +607,14 @@ namespace Lucene.Net.Index
             /// </summary>
             internal virtual void DropAll(bool doSave)
             {
+                Lucene.Net.Store.MMapTrace.Log($"ReaderPool.DropAll(doSave={doSave}) — readerMap has {readerMap.Count} entries");
                 UninterruptableMonitor.Enter(this);
                 try
                 {
                     Exception priorE = null;
                     foreach (var pair in readerMap)
                     {
+                        Lucene.Net.Store.MMapTrace.Log($"ReaderPool.DropAll iterating segment={pair.Key.Info.Name}");
                         ReadersAndUpdates rld = pair.Value;
 
                         try
