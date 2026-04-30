@@ -222,7 +222,17 @@ namespace Lucene.Net.Store
         {
             EnsureOpen();
             var file = Path.Combine(Directory.FullName, name);
-            MMapTrace.Log($"CreateSlicer name={name}");
+            // Log a stacktrace so we can see who's creating each slicer and
+            // correlate with later (or missing) dispose events.
+            var st = new System.Diagnostics.StackTrace(skipFrames: 1, fNeedFileInfo: false);
+            var frames = st.GetFrames();
+            var stackSummary = new System.Text.StringBuilder();
+            for (int i = 0; i < Math.Min(frames?.Length ?? 0, 8); i++)
+            {
+                var m = frames![i].GetMethod();
+                stackSummary.Append($"  [{i}] {m?.DeclaringType?.FullName}.{m?.Name}\n");
+            }
+            MMapTrace.Log($"CreateSlicer name={name}\n{stackSummary}");
             SharedMapping mapping = SharedMapping.Create(file, chunkSizePower);
             try
             {
