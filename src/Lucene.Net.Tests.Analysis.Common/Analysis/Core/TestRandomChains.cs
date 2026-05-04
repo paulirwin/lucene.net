@@ -80,10 +80,10 @@ namespace Lucene.Net.Analysis.Core
             }
         }
 
-        private static readonly IDictionary<ConstructorInfo, IPredicate<object[]>> brokenConstructors = new Dictionary<ConstructorInfo, IPredicate<object[]>>();
+        private static readonly IDictionary<ConstructorInfo, IPredicate<object[]>> brokenConstructors = new JCG.Dictionary<ConstructorInfo, IPredicate<object[]>>();
         // TODO: also fix these and remove (maybe):
         // Classes/options that don't produce consistent graph offsets:
-        private static readonly IDictionary<ConstructorInfo, IPredicate<object[]>> brokenOffsetsConstructors = new Dictionary<ConstructorInfo, IPredicate<object[]>>();
+        private static readonly IDictionary<ConstructorInfo, IPredicate<object[]>> brokenOffsetsConstructors = new JCG.Dictionary<ConstructorInfo, IPredicate<object[]>>();
 
         internal static readonly ISet<Type> allowedTokenizerArgs, allowedTokenFilterArgs, allowedCharFilterArgs;
 
@@ -1040,7 +1040,7 @@ namespace Lucene.Net.Analysis.Core
                         ConstructorInfo ctor = tokenfilters[random.nextInt(tokenfilters.size())];
 
                         // hack: MockGraph/MockLookahead has assertions that will trip if they follow
-                        // an offsets violator. so we cant use them after e.g. wikipediatokenizer
+                        // an offsets violator. so we can't use them after e.g. wikipediatokenizer
                         if (!spec.offsetsAreCorrect &&
                             (ctor.DeclaringType.Equals(typeof(MockGraphTokenFilter)))
                                 || ctor.DeclaringType.Equals(typeof(MockRandomLookaheadTokenFilter)))

@@ -2,6 +2,7 @@ using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Analysis.Ja.Util
 {
@@ -41,11 +42,11 @@ namespace Lucene.Net.Analysis.Ja.Util
         }
 
         // see http://en.wikipedia.org/wiki/Hepburn_romanization,
-        // but this isnt even thorough or really probably what we want!
+        // but this isn't even thorough or really probably what we want!
         [Test]
         public void TestHepburnTable()
         {
-            IDictionary<String, String> table = new Dictionary<String, String>() {
+            IDictionary<String, String> table = new JCG.Dictionary<String, String>() {
                 { "ア", "a" }, { "イ", "i" }, { "ウ", "u" }, { "エ", "e" }, { "オ", "o" },
                 { "カ", "ka" }, { "キ", "ki" }, { "ク", "ku" }, { "ケ", "ke" }, { "コ", "ko" },
                 { "サ", "sa" }, { "シ", "shi" }, { "ス", "su" }, { "セ", "se" }, { "ソ", "so" },

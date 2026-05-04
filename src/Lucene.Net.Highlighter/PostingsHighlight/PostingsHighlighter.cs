@@ -318,7 +318,7 @@ namespace Lucene.Net.Search.PostingsHighlight
         /// <exception cref="ArgumentException">if <c>field</c> was indexed without <see cref="IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS"/></exception>
         public virtual IDictionary<string, string[]> HighlightFields(string[] fieldsIn, Query query, IndexSearcher searcher, int[] docidsIn, int[] maxPassagesIn)
         {
-            IDictionary<string, string[]> snippets = new Dictionary<string, string[]>();
+            IDictionary<string, string[]> snippets = new JCG.Dictionary<string, string[]>();
             foreach (var ent in HighlightFieldsAsObjects(fieldsIn, query, searcher, docidsIn, maxPassagesIn))
             {
                 object[] snippetObjects = ent.Value;
@@ -428,7 +428,7 @@ namespace Lucene.Net.Search.PostingsHighlight
             // pull stored data:
             IList<string[]> contents = LoadFieldValues(searcher, fields, docids, maxLength);
 
-            IDictionary<string, object[]> highlights = new Dictionary<string, object[]>();
+            IDictionary<string, object[]> highlights = new JCG.Dictionary<string, object[]>();
             for (int i = 0; i < fields.Length; i++)
             {
                 string field = fields[i];
@@ -436,8 +436,8 @@ namespace Lucene.Net.Search.PostingsHighlight
                 Term floor = new Term(field, "");
                 Term ceiling = new Term(field, UnicodeUtil.BIG_TERM);
 
-                // LUCENENET: Call custom GetViewBetween overload to mimic Java's exclusive upper bound behavior.
-                var fieldTerms = queryTerms.GetViewBetween(floor, lowerValueInclusive: true, ceiling, upperValueInclusive: false);
+                // LUCENENET: Call J2N's GetView overload to mimic Java's exclusive upper bound behavior.
+                var fieldTerms = queryTerms.GetView(floor, fromInclusive: true, ceiling, toInclusive: false);
 
                 // TODO: should we have some reasonable defaults for term pruning? (e.g. stopwords)
 
@@ -514,7 +514,7 @@ namespace Lucene.Net.Search.PostingsHighlight
 
         private IDictionary<int, object> HighlightField(string field, string[] contents, BreakIterator bi, BytesRef[] terms, int[] docids, IList<AtomicReaderContext> leaves, int maxPassages, Query query)
         {
-            IDictionary<int, object> highlights = new Dictionary<int, object>();
+            IDictionary<int, object> highlights = new JCG.Dictionary<int, object>();
 
             PassageFormatter fieldFormatter = GetFormatter(field);
             if (fieldFormatter is null)

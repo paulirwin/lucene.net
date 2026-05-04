@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using Integer = J2N.Numerics.Int32;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Analysis.CharFilters
 {
@@ -30505,7 +30506,7 @@ namespace Lucene.Net.Analysis.CharFilters
 
         /// <summary>error messages for the codes above</summary>
         private static readonly string[] ZZ_ERROR_MSG = {
-            "Unkown internal scanner error",
+            "Unknown internal scanner error",
             "Error: could not match input",
             "Error: pushback value was too large"
         };
@@ -30679,7 +30680,7 @@ namespace Lucene.Net.Analysis.CharFilters
         /// user code:
         /// </summary>
         private static readonly IDictionary<string, string> upperCaseVariantsAccepted
-            = new Dictionary<string, string>()
+            = new JCG.Dictionary<string, string>()
             {
                 {"quot", "QUOT"},
                 {"copy", "COPY" },

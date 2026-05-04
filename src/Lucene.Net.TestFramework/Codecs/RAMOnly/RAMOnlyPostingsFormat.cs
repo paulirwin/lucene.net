@@ -8,7 +8,6 @@ using Lucene.Net.Support.Threading;
 using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Codecs.RAMOnly
@@ -391,8 +390,7 @@ namespace Lucene.Net.Codecs.RAMOnly
                     }
                     else
                     {
-                        //It = RamField.TermToDocs.tailMap(Current).Keys.GetEnumerator();
-                        it = ramField.termToDocs.Where(kvpair => string.CompareOrdinal(kvpair.Key, current) >= 0).Select(pair => pair.Key).GetEnumerator();
+                        it = ramField.termToDocs.GetViewAfter(current).Keys.GetEnumerator();
                     }
                 }
             }
@@ -407,7 +405,12 @@ namespace Lucene.Net.Codecs.RAMOnly
                 }
                 else
                 {
-                    if (current.CompareToOrdinal(ramField.termToDocs.Last().Key) > 0)
+                    if (!ramField.termToDocs.TryGetLast(out string lastKey, out _))
+                        // LUCENENET: Java would throw a NoSuchElementException here, so we throw InvalidOperationException
+                        // to indicate that the dictionary is empty when it shouldn't be.
+                        throw new InvalidOperationException("The termToDocs dictionary is empty, but it should have at least one term.");
+
+                    if (current.CompareToOrdinal(lastKey) > 0)
                     {
                         return SeekStatus.END;
                     }
@@ -567,7 +570,7 @@ namespace Lucene.Net.Codecs.RAMOnly
         }
 
         // Holds all indexes created, keyed by the ID assigned in fieldsConsumer
-        private readonly IDictionary<int, RAMPostings> state = new Dictionary<int, RAMPostings>();
+        private readonly IDictionary<int, RAMPostings> state = new JCG.Dictionary<int, RAMPostings>();
 
         private readonly AtomicInt32 nextID = new AtomicInt32();
 

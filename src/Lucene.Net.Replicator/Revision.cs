@@ -28,7 +28,7 @@ namespace Lucene.Net.Replicator
     /// revision will contain files from a single source. However, some applications
     /// may require to treat a collection of indexes as a single entity so that the
     /// files from all sources are replicated together, to guarantee consistency
-    /// beween them. For example, an application which indexes facets will need to
+    /// between them. For example, an application which indexes facets will need to
     /// replicate both the search and taxonomy indexes together, to guarantee that
     /// they match at the client side.
     /// </summary>
@@ -59,7 +59,7 @@ namespace Lucene.Net.Replicator
 
         /// <summary>
         /// Returns a <see cref="Stream"/> for the given <paramref name="fileName"/> and <paramref name="source"/>. It is the
-        /// caller's respnsibility to dispose the <see cref="Stream"/> when it has been
+        /// caller's responsibility to dispose the <see cref="Stream"/> when it has been
         /// consumed.
         /// </summary>
         /// <exception cref="IOException"></exception>
