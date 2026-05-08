@@ -86,6 +86,6 @@ public class ExtractRunner {
             JarDownloader.downloadMavenDependency(context, dependency, context.isForce());
         }
 
-        return JarReflector.reflectOverJars(context);
+        return RevapiReflector.reflectOverJars(context);
     }
 }
