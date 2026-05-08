@@ -65,9 +65,12 @@ public class RevapiReflector {
 
     private static final String EMPTY_CONFIG = "{}";
 
-    /** Bundles javac's Elements and Types utilities so they can be threaded through the
-     *  reflector with one argument instead of two. */
-    record Env(Elements elements, Types types) {}
+    /**
+     * Bundles javac's {@link Elements} / {@link Types} utilities and the
+     * {@code stableParameterNames} flag so they can be threaded through the reflector
+     * with one argument.
+     */
+    record Env(Elements elements, Types types, boolean stableParameterNames) {}
 
     public static List<LibraryResult> reflectOverJars(ExtractContext context) throws Exception {
         var libraries = context.getLibraries();
@@ -123,7 +126,8 @@ public class RevapiReflector {
             var forest = archiveAnalyzer.analyze(TreeFilter.matchAndDescend());
             forest.getRoots(); // force compilation
             var probing = archiveAnalyzer.getProbingEnvironment();
-            var env = new Env(probing.getElementUtils(), probing.getTypeUtils());
+            var env = new Env(probing.getElementUtils(), probing.getTypeUtils(),
+                    context.isStableParameterNames());
 
             var types = new ArrayList<TypeMetadata>();
             for (String canonicalName : enumerateTypeNames(primaryFile)) {
@@ -293,12 +297,20 @@ public class RevapiReflector {
                 String enclName = (encl instanceof TypeElement enclType)
                         ? env.elements().getBinaryName(enclType).toString()
                         : "";
+                // The synthetic this$0 isn't visible to javac's element model. In stable
+                // mode we name it arg0 (matching reflection's no-parameters fallback) and
+                // shift downstream params to arg1, arg2, .... When using real names we
+                // emit the JVM-conventional this$0 and leave the others as javac gave them.
                 var injected = new ArrayList<ParameterMetadata>(params.size() + 1);
-                injected.add(new ParameterMetadata("arg0", enclName, enclName, List.of()));
-                // Renumber the existing arg names to start at 1.
-                for (int i = 0; i < params.size(); i++) {
-                    var p = params.get(i);
-                    injected.add(new ParameterMetadata("arg" + (i + 1), p.type(), p.genericType(), p.annotations()));
+                String synthName = env.stableParameterNames() ? "arg0" : "this$0";
+                injected.add(new ParameterMetadata(synthName, enclName, enclName, List.of()));
+                if (env.stableParameterNames()) {
+                    for (int i = 0; i < params.size(); i++) {
+                        var p = params.get(i);
+                        injected.add(new ParameterMetadata("arg" + (i + 1), p.type(), p.genericType(), p.annotations()));
+                    }
+                } else {
+                    injected.addAll(params);
                 }
                 params = injected;
             }
@@ -375,13 +387,13 @@ public class RevapiReflector {
         var result = new ArrayList<ParameterMetadata>(params.size());
         for (int i = 0; i < params.size(); i++) {
             var p = params.get(i);
-            // Emit arg{i} to match java.lang.reflect.Parameter.getName()'s behavior on
-            // jars compiled without -parameters. javac's element model populates names
-            // from the LocalVariableTable debug attribute, which would diverge from
-            // reflection's view; we deliberately discard those here so the JSON shape
-            // stays stable.
+            // In stable mode (used by `hash`), emit arg{i} so the digest doesn't shift
+            // when a jar is rebuilt with or without -parameters / debug info. Otherwise
+            // use whatever name javac surfaced (real source name when available, else
+            // its own arg{i} fallback).
+            String name = env.stableParameterNames() ? "arg" + i : p.getSimpleName().toString();
             result.add(new ParameterMetadata(
-                    "arg" + i,
+                    name,
                     typeNameOf(p.asType(), false, env),
                     typeNameOf(p.asType(), true, env),
                     getAnnotations(p.getAnnotationMirrors(), env)

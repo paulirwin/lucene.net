@@ -108,7 +108,7 @@ public class Main {
 
         var cmd = parseOrExit(args, options, "extract");
 
-        var context = buildContext(cmd, cmd.getOptionValue(output));
+        var context = buildContext(cmd, cmd.getOptionValue(output), false);
 
         try {
             ExtractRunner.extract(context);
@@ -121,7 +121,10 @@ public class Main {
         var options = getCommonOptions();
         var cmd = parseOrExit(args, options, "hash");
 
-        var context = buildContext(cmd, null);
+        // Hash mode forces synthetic arg{i} parameter names so the digest is stable across
+        // jars whose only difference is the presence of MethodParameters/LocalVariableTable
+        // debug attributes.
+        var context = buildContext(cmd, null, true);
 
         try {
             ExtractRunner.printHash(context);
@@ -142,7 +145,7 @@ public class Main {
         }
     }
 
-    private static ExtractContext buildContext(CommandLine cmd, String outputValue) {
+    private static ExtractContext buildContext(CommandLine cmd, String outputValue, boolean stableParameterNames) {
         return new ExtractContext(
                 cmd.getOptionValue(downloadDir, "download"),
                 cmd.getOptionValues(library),
@@ -150,7 +153,8 @@ public class Main {
                 outputValue,
                 cmd.getOptionValues(dependency) == null ? new String[0] : cmd.getOptionValues(dependency),
                 cmd.hasOption(strict),
-                !cmd.hasOption(noVerifyChecksum));
+                !cmd.hasOption(noVerifyChecksum),
+                stableParameterNames);
     }
 
     private static Options getCommonOptions() {

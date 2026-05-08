@@ -27,13 +27,14 @@ public class ExtractContext {
     private final MavenCoordinates[] dependencies;
     private final boolean strict;
     private final boolean verifyChecksum;
+    private final boolean stableParameterNames;
 
     public ExtractContext(String downloadsDir,
                           String[] libraryNames,
                           boolean force,
                           String outputFile,
                           String[] dependencies) {
-        this(downloadsDir, libraryNames, force, outputFile, dependencies, false, true);
+        this(downloadsDir, libraryNames, force, outputFile, dependencies, false, true, false);
     }
 
     public ExtractContext(String downloadsDir,
@@ -43,6 +44,18 @@ public class ExtractContext {
                           String[] dependencies,
                           boolean strict,
                           boolean verifyChecksum) {
+        this(downloadsDir, libraryNames, force, outputFile, dependencies,
+                strict, verifyChecksum, false);
+    }
+
+    public ExtractContext(String downloadsDir,
+                          String[] libraryNames,
+                          boolean force,
+                          String outputFile,
+                          String[] dependencies,
+                          boolean strict,
+                          boolean verifyChecksum,
+                          boolean stableParameterNames) {
         this.downloadsDir = downloadsDir;
         this.libraries = Stream.of(libraryNames)
                 .map(ExtractContext::parseCoordinates)
@@ -54,6 +67,7 @@ public class ExtractContext {
                 .toArray(MavenCoordinates[]::new);
         this.strict = strict;
         this.verifyChecksum = verifyChecksum;
+        this.stableParameterNames = stableParameterNames;
     }
 
     private static MavenCoordinates parseCoordinates(String coord) {
@@ -95,5 +109,15 @@ public class ExtractContext {
 
     public boolean isVerifyChecksum() {
         return verifyChecksum;
+    }
+
+    /**
+     * When true, parameter names are emitted as {@code arg0}, {@code arg1}, ... regardless
+     * of what's in the classfile's {@code MethodParameters} or {@code LocalVariableTable}
+     * attributes. The {@code hash} action sets this so the output is stable across jar
+     * builds whose only difference is the presence/absence of those debug attributes.
+     */
+    public boolean isStableParameterNames() {
+        return stableParameterNames;
     }
 }
