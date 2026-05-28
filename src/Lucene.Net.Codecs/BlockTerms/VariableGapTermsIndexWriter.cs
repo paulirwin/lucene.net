@@ -49,7 +49,7 @@ namespace Lucene.Net.Codecs.BlockTerms
         internal const int VERSION_CHECKSUM = 2;
         internal const int VERSION_CURRENT = VERSION_CHECKSUM;
 
-        private readonly IList<FSTFieldWriter> fields = new JCG.List<FSTFieldWriter>();
+        private readonly JCG.List<FSTFieldWriter> fields = new JCG.List<FSTFieldWriter>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
 
         //private readonly FieldInfos fieldInfos; // unread  // LUCENENET: Not used
         private readonly IndexTermSelector policy;

@@ -111,7 +111,9 @@ namespace Lucene.Net.Util
         /// Sizes of primitive classes.
         /// </summary>
         // LUCENENET specific - Identity comparer is not necessary here because Type is already representing an identity
-        private static readonly IDictionary<Type, int> primitiveSizes = new JCG.Dictionary<Type, int>(/*IdentityEqualityComparer<Type>.Default*/) // LUCENENET: Avoid static constructors (see https://github.com/apache/lucenenet/pull/224#issuecomment-469284006)
+        // LUCENENET: Avoid static constructors (see https://github.com/apache/lucenenet/pull/224#issuecomment-469284006)
+        // LUCENENET: CA1859 - Use concrete types when possible for improved performance
+        private static readonly JCG.Dictionary<Type, int> primitiveSizes = new JCG.Dictionary<Type, int>(/*IdentityEqualityComparer<Type>.Default*/)
         {
             [typeof(bool)] = NUM_BYTES_BOOLEAN,
             [typeof(sbyte)] = NUM_BYTES_BYTE,

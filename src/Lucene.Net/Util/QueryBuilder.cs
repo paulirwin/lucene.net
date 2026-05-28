@@ -350,7 +350,7 @@ namespace Lucene.Net.Util
                         // phrase query:
                         MultiPhraseQuery mpq = NewMultiPhraseQuery();
                         mpq.Slop = phraseSlop;
-                        IList<Term> multiTerms = new JCG.List<Term>();
+                        var multiTerms = new JCG.List<Term>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
                         int position = -1;
                         for (int i = 0; i < numTokens; i++)
                         {

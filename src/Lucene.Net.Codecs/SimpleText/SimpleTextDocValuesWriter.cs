@@ -56,7 +56,7 @@ namespace Lucene.Net.Codecs.SimpleText
 #pragma warning restore CA2213 // Disposable fields should be disposed
         private readonly BytesRef scratch = new BytesRef();
         private readonly int numDocs;
-        private readonly ISet<string> _fieldsSeen = new JCG.HashSet<string>(); // for asserting
+        private readonly JCG.HashSet<string> _fieldsSeen = new JCG.HashSet<string>(); // for asserting // LUCENENET: CA1859 - Use concrete types when possible for improved performance
 
         // LUCENENET NOTE: Changed from public to internal because the class had to be made public, but is not for public use.
         internal SimpleTextDocValuesWriter(SegmentWriteState state, string ext)

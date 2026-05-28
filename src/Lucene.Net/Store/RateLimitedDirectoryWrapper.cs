@@ -34,7 +34,7 @@ namespace Lucene.Net.Store
     {
         // we need to be volatile here to make sure we see all the values that are set
         // / modified concurrently
-        private readonly IDictionary<IOContext.UsageContext, RateLimiter> _contextRateLimiters = new ConcurrentDictionary<IOContext.UsageContext, RateLimiter>();
+        private readonly ConcurrentDictionary<IOContext.UsageContext, RateLimiter> _contextRateLimiters = new ConcurrentDictionary<IOContext.UsageContext, RateLimiter>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
 
         public RateLimitedDirectoryWrapper(Directory wrapped)
             : base(wrapped)

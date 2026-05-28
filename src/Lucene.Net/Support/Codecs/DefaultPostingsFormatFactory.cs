@@ -115,8 +115,9 @@ namespace Lucene.Net.Codecs
 
         // NOTE: The following 2 dictionaries are static, since this instance is stored in a static
         // variable in the Codec class.
-        private readonly IDictionary<string, Type> postingsFormatNameToTypeMap;
-        private readonly IDictionary<Type, PostingsFormat> postingsFormatInstanceCache;
+        // LUCENENET: CA1859 - Use concrete types when possible for improved performance
+        private readonly Dictionary<string, Type> postingsFormatNameToTypeMap;
+        private readonly Dictionary<Type, PostingsFormat> postingsFormatInstanceCache;
 
         /// <summary>
         /// Creates a new instance of <see cref="DefaultPostingsFormatFactory"/>.

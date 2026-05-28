@@ -42,7 +42,7 @@ namespace Lucene.Net.Codecs.Pulsing
         private readonly SegmentReadState _segmentState;
         private int _maxPositions;
         private int _version;
-        private IDictionary<int, int> _fields;
+        private JCG.SortedDictionary<int, int> _fields; // LUCENENET: CA1859 - Use concrete types when possible for improved performance
 
         public PulsingPostingsReader(SegmentReadState state, PostingsReaderBase wrappedPostingsReader)
         {

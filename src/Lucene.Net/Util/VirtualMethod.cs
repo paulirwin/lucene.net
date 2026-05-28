@@ -66,7 +66,7 @@ namespace Lucene.Net.Util
     // is not generic).
     public sealed class VirtualMethod
     {
-        private static readonly ISet<MethodInfo> singletonSet = new ConcurrentHashSet<MethodInfo>();
+        private static readonly ConcurrentHashSet<MethodInfo> singletonSet = new ConcurrentHashSet<MethodInfo>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
 
         private readonly Type baseClass;
         private readonly string method;

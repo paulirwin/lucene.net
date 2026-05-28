@@ -51,7 +51,7 @@ namespace Lucene.Net.Codecs.BlockTerms
 
         private readonly int termIndexInterval;
 
-        private readonly IList<SimpleFieldWriter> fields = new JCG.List<SimpleFieldWriter>();
+        private readonly JCG.List<SimpleFieldWriter> fields = new JCG.List<SimpleFieldWriter>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
 
         //private readonly FieldInfos fieldInfos; // unread  // LUCENENET: Not used
 

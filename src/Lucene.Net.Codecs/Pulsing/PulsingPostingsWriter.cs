@@ -53,7 +53,7 @@ namespace Lucene.Net.Codecs.Pulsing
 
         private readonly SegmentWriteState _segmentState;
         //private IndexOutput _termsOut; // LUCENENET: Never read
-        private readonly IList<FieldMetaData> _fields;
+        private readonly JCG.List<FieldMetaData> _fields; // LUCENENET: CA1859 - Use concrete types when possible for improved performance
         private IndexOptions _indexOptions;
         private bool _storePayloads;
 

@@ -106,7 +106,7 @@ namespace Lucene.Net.Search
 
             private readonly IMaxNonCompetitiveBoostAttribute maxBoostAtt;
 
-            private readonly IDictionary<BytesRef, ScoreTerm> visitedTerms;
+            private readonly JCG.Dictionary<BytesRef, ScoreTerm> visitedTerms; // LUCENENET: CA1859 - Use concrete types when possible for improved performance
 
             private TermsEnum termsEnum;
             private IComparer<BytesRef> termComp;

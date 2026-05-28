@@ -425,7 +425,7 @@ namespace Lucene.Net.Index
                     {
                         long totAfterMergeBytes = 0;
 
-                        IList<SegmentCommitInfo> candidate = new JCG.List<SegmentCommitInfo>();
+                        var candidate = new JCG.List<SegmentCommitInfo>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
                         bool hitTooLarge = false;
                         for (int idx = startIdx; idx < eligible.Count && candidate.Count < maxMergeAtOnce; idx++)
                         {

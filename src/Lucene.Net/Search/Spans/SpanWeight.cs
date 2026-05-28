@@ -43,7 +43,7 @@ namespace Lucene.Net.Search.Spans
             this.m_query = query;
 
             m_termContexts = new JCG.Dictionary<Term, TermContext>();
-            ISet<Term> terms = new JCG.SortedSet<Term>();
+            var terms = new JCG.SortedSet<Term>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
             query.ExtractTerms(terms);
             IndexReaderContext context = searcher.TopReaderContext;
             TermStatistics[] termStats = new TermStatistics[terms.Count];

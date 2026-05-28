@@ -97,7 +97,7 @@ namespace Lucene.Net.Codecs.Memory
             long gcd = 0;
             bool missing = false;
             // TODO: more efficient?
-            ISet<long> uniqueValues = null;
+            JCG.HashSet<long> uniqueValues = null; // LUCENENET: CA1859 - Use concrete types when possible for improved performance
             if (optimizeStorage)
             {
                 uniqueValues = new JCG.HashSet<long>();

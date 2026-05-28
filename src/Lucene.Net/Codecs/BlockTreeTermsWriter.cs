@@ -283,7 +283,7 @@ namespace Lucene.Net.Codecs
             }
         }
 
-        private readonly IList<FieldMetaData> fields = new JCG.List<FieldMetaData>();
+        private readonly JCG.List<FieldMetaData> fields = new JCG.List<FieldMetaData>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
         // private final String segment;
 
         protected object m_subclassState = null;
@@ -651,7 +651,7 @@ namespace Lucene.Net.Codecs
             private readonly Builder<object> blockBuilder;
 
             // PendingTerm or PendingBlock:
-            private readonly IList<PendingEntry> pending = new JCG.List<PendingEntry>();
+            private readonly JCG.List<PendingEntry> pending = new JCG.List<PendingEntry>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
 
             // Index into pending of most recently written block
             private int lastBlockIndex = -1;
@@ -1050,7 +1050,7 @@ namespace Lucene.Net.Codecs
                     isLeafBlock = v;
                 }
 
-                IList<FST<BytesRef>> subIndices;
+                JCG.List<FST<BytesRef>> subIndices; // LUCENENET: CA1859 - Use concrete types when possible for improved performance
 
                 int termCount;
 

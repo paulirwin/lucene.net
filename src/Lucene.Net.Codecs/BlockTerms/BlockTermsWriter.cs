@@ -86,7 +86,7 @@ namespace Lucene.Net.Codecs.BlockTerms
             }
         }
 
-        private readonly IList<FieldMetaData> fields = new JCG.List<FieldMetaData>();
+        private readonly JCG.List<FieldMetaData> fields = new JCG.List<FieldMetaData>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
 
         // private final String segment;
 

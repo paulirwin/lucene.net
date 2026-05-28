@@ -40,16 +40,18 @@ namespace Lucene.Net.Codecs.Memory
     internal class MemoryDocValuesProducer : DocValuesProducer
     {
         // metadata maps (just file pointers and minimal stuff)
-        private readonly IDictionary<int, NumericEntry> numerics;
-        private readonly IDictionary<int, BinaryEntry> binaries;
-        private readonly IDictionary<int, FSTEntry> fsts;
+        // LUCENENET: CA1859 - Use concrete types when possible for improved performance
+        private readonly JCG.Dictionary<int, NumericEntry> numerics;
+        private readonly JCG.Dictionary<int, BinaryEntry> binaries;
+        private readonly JCG.Dictionary<int, FSTEntry> fsts;
         private readonly IndexInput data;
 
         // ram instances we have already loaded
-        private readonly IDictionary<int, NumericDocValues> numericInstances = new JCG.Dictionary<int, NumericDocValues>();
-        private readonly IDictionary<int, BinaryDocValues> binaryInstances = new JCG.Dictionary<int, BinaryDocValues>();
-        private readonly IDictionary<int, FST<Int64>> fstInstances = new JCG.Dictionary<int, FST<Int64>>();
-        private readonly IDictionary<int, IBits> docsWithFieldInstances = new JCG.Dictionary<int, IBits>();
+        // LUCENENET: CA1859 - Use concrete types when possible for improved performance
+        private readonly JCG.Dictionary<int, NumericDocValues> numericInstances = new JCG.Dictionary<int, NumericDocValues>();
+        private readonly JCG.Dictionary<int, BinaryDocValues> binaryInstances = new JCG.Dictionary<int, BinaryDocValues>();
+        private readonly JCG.Dictionary<int, FST<Int64>> fstInstances = new JCG.Dictionary<int, FST<Int64>>();
+        private readonly JCG.Dictionary<int, IBits> docsWithFieldInstances = new JCG.Dictionary<int, IBits>();
 
         private readonly int maxDoc;
         private readonly AtomicInt64 ramBytesUsed;

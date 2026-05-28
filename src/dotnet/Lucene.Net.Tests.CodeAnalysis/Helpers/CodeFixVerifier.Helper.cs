@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Simplification;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 
@@ -80,7 +81,7 @@ namespace TestHelper
         /// </summary>
         /// <param name="document">The Document to run the compiler diagnostic analyzers on</param>
         /// <returns>The compiler diagnostics that were found in the code</returns>
-        private static IEnumerable<Diagnostic> GetCompilerDiagnostics(Document document)
+        private static ImmutableArray<Diagnostic> GetCompilerDiagnostics(Document document)
         {
             return document.GetSemanticModelAsync().Result.GetDiagnostics();
         }
@@ -99,4 +100,3 @@ namespace TestHelper
         }
     }
 }
-

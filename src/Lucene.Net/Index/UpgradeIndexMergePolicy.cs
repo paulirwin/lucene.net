@@ -90,7 +90,7 @@ namespace Lucene.Net.Index
         public override MergeSpecification FindForcedMerges(SegmentInfos segmentInfos, int maxSegmentCount, IDictionary<SegmentCommitInfo, bool> segmentsToMerge)
         {
             // first find all old segments
-            IDictionary<SegmentCommitInfo, bool> oldSegments = new JCG.Dictionary<SegmentCommitInfo, bool>();
+            var oldSegments = new JCG.Dictionary<SegmentCommitInfo, bool>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
             foreach (SegmentCommitInfo si in segmentInfos.Segments)
             {
                 if (segmentsToMerge.TryGetValue(si, out bool v) && ShouldUpgradeSegment(si))
@@ -131,7 +131,7 @@ namespace Lucene.Net.Index
                 {
                     Message("findForcedMerges: " + m_base.GetType().Name + " does not want to merge all old segments, merge remaining ones into new segment: " + oldSegments);
                 }
-                IList<SegmentCommitInfo> newInfos = new JCG.List<SegmentCommitInfo>();
+                var newInfos = new JCG.List<SegmentCommitInfo>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
                 foreach (SegmentCommitInfo si in segmentInfos.Segments)
                 {
                     if (oldSegments.ContainsKey(si))

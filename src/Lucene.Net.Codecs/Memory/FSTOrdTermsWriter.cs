@@ -150,7 +150,7 @@ namespace Lucene.Net.Codecs.Memory
 
         private readonly PostingsWriterBase postingsWriter;
         //private readonly FieldInfos fieldInfos; // LUCENENET: Never read
-        private readonly IList<FieldMetaData> _fields = new JCG.List<FieldMetaData>();
+        private readonly JCG.List<FieldMetaData> _fields = new JCG.List<FieldMetaData>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
 #pragma warning disable CA2213 // Disposable fields should be disposed
         private IndexOutput blockOut = null;
         private readonly IndexOutput indexOut = null; // LUCENENET: marked readonly

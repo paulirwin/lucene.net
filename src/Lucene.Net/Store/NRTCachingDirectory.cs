@@ -128,7 +128,7 @@ namespace Lucene.Net.Store
             {
                 EnsureOpen(); // LUCENENET: Added check to ensure we aren't disposed.
 
-                ISet<string> files = new JCG.HashSet<string>();
+                var files = new JCG.HashSet<string>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
                 foreach (string f in cache.ListAll())
                 {
                     files.Add(f);

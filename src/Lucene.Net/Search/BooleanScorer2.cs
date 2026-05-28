@@ -360,7 +360,7 @@ namespace Lucene.Net.Search
 
         public override ICollection<ChildScorer> GetChildren()
         {
-            IList<ChildScorer> children = new JCG.List<ChildScorer>();
+            var children = new JCG.List<ChildScorer>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
             foreach (Scorer s in optionalScorers)
             {
                 children.Add(new ChildScorer(s, "SHOULD"));

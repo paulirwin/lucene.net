@@ -125,7 +125,7 @@ namespace Lucene.Net.Codecs.Memory
 #pragma warning disable CA2213 // Disposable fields should be disposed
         private IndexOutput _output;
 #pragma warning restore CA2213 // Disposable fields should be disposed
-        private readonly IList<FieldMetaData> _fields = new JCG.List<FieldMetaData>();
+        private readonly JCG.List<FieldMetaData> _fields = new JCG.List<FieldMetaData>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
 
         public FSTTermsWriter(SegmentWriteState state, PostingsWriterBase postingsWriter)
         {

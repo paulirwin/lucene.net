@@ -72,7 +72,7 @@ namespace Lucene.Net.Search
         /// </summary>
         public static Automaton ToAutomaton(Term wildcardquery)
         {
-            IList<Automaton> automata = new JCG.List<Automaton>();
+            var automata = new JCG.List<Automaton>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
 
             string wildcardText = wildcardquery.Text;
 

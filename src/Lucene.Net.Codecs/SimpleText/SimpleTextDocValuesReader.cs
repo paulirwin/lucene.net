@@ -59,7 +59,7 @@ namespace Lucene.Net.Codecs.SimpleText
         private readonly int maxDoc;
         private readonly IndexInput data;
         private readonly BytesRef scratch = new BytesRef();
-        private readonly IDictionary<string, OneField> fields = new JCG.Dictionary<string, OneField>();
+        private readonly JCG.Dictionary<string, OneField> fields = new JCG.Dictionary<string, OneField>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
 
         // LUCENENET NOTE: Changed from public to internal because the class had to be made public, but is not for public use.
         internal SimpleTextDocValuesReader(SegmentReadState state, string ext)

@@ -265,6 +265,9 @@ dotnet_diagnostic.CA1031.severity = none
 # CA1034: Do not nest types
 dotnet_diagnostic.CA1034.severity = none
 
+# CA1859: Use concrete types when possible for improved performance
+dotnet_diagnostic.CA1859.severity = warning
+
 # CA2249: Consider using String.Contains instead of String.IndexOf
 dotnet_diagnostic.CA2249.severity = none
 

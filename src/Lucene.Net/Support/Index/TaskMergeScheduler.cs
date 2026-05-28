@@ -49,7 +49,7 @@ namespace Lucene.Net.Index
         private readonly ManualResetEventSlim _manualResetEvent = new ManualResetEventSlim();
         /// <summary>
         /// List of currently active <see cref="MergeThread"/>s.</summary>
-        private readonly IList<MergeThread> _mergeThreads = new List<MergeThread>();
+        private readonly List<MergeThread> _mergeThreads = new List<MergeThread>(); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
 
         /// <summary>
         /// How many <see cref="MergeThread"/>s have kicked off (this is use

@@ -1,7 +1,5 @@
 using Lucene.Net.Diagnostics;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using JCG = J2N.Collections.Generic;
@@ -67,7 +65,7 @@ namespace Lucene.Net.Codecs.SimpleText
                 SimpleTextUtil.ReadLine(input, scratch);
                 if (Debugging.AssertsEnabled) Debugging.Assert(StringHelper.StartsWith(scratch, SimpleTextSegmentInfoWriter.SI_NUM_DIAG));
                 int numDiag = Convert.ToInt32(ReadString(SimpleTextSegmentInfoWriter.SI_NUM_DIAG.Length, scratch), CultureInfo.InvariantCulture);
-                IDictionary<string, string> diagnostics = new JCG.Dictionary<string, string>();
+                var diagnostics = new JCG.Dictionary<string, string>();
 
                 for (int i = 0; i < numDiag; i++)
                 {

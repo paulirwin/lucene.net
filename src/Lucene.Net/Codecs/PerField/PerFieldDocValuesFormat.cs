@@ -308,7 +308,7 @@ namespace Lucene.Net.Codecs.PerField
             {
                 this.outerInstance = outerInstance;
 
-                IDictionary<DocValuesProducer, DocValuesProducer> oldToNew = new JCG.Dictionary<DocValuesProducer, DocValuesProducer>(IdentityEqualityComparer<DocValuesProducer>.Default);
+                var oldToNew = new JCG.Dictionary<DocValuesProducer, DocValuesProducer>(IdentityEqualityComparer<DocValuesProducer>.Default); // LUCENENET: CA1859 - Use concrete types when possible for improved performance
                 // First clone all formats
                 foreach (KeyValuePair<string, DocValuesProducer> ent in other.formats)
                 {

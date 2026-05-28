@@ -5,8 +5,6 @@ using Lucene.Net.Store;
 using Lucene.Net.Support.Threading;
 using Lucene.Net.Util;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Codecs.Memory
@@ -34,18 +32,20 @@ namespace Lucene.Net.Codecs.Memory
     internal class DirectDocValuesProducer : DocValuesProducer
     {
         // metadata maps (just file pointers and minimal stuff)
-        private readonly IDictionary<int, NumericEntry> numerics = new JCG.Dictionary<int, NumericEntry>();
-        private readonly IDictionary<int, BinaryEntry> binaries = new JCG.Dictionary<int, BinaryEntry>();
-        private readonly IDictionary<int, SortedEntry> sorteds = new JCG.Dictionary<int, SortedEntry>();
-        private readonly IDictionary<int, SortedSetEntry> sortedSets = new JCG.Dictionary<int, SortedSetEntry>();
+        // LUCENENET: CA1859 - Use concrete types when possible for improved performance
+        private readonly JCG.Dictionary<int, NumericEntry> numerics = new JCG.Dictionary<int, NumericEntry>();
+        private readonly JCG.Dictionary<int, BinaryEntry> binaries = new JCG.Dictionary<int, BinaryEntry>();
+        private readonly JCG.Dictionary<int, SortedEntry> sorteds = new JCG.Dictionary<int, SortedEntry>();
+        private readonly JCG.Dictionary<int, SortedSetEntry> sortedSets = new JCG.Dictionary<int, SortedSetEntry>();
         private readonly IndexInput data;
 
         // ram instances we have already loaded
-        private readonly IDictionary<int, NumericDocValues> numericInstances = new JCG.Dictionary<int, NumericDocValues>();
-        private readonly IDictionary<int, BinaryDocValues> binaryInstances = new JCG.Dictionary<int, BinaryDocValues>();
-        private readonly IDictionary<int, SortedDocValues> sortedInstances = new JCG.Dictionary<int, SortedDocValues>();
-        private readonly IDictionary<int, SortedSetRawValues> sortedSetInstances = new JCG.Dictionary<int, SortedSetRawValues>();
-        private readonly IDictionary<int, IBits> docsWithFieldInstances = new JCG.Dictionary<int, IBits>();
+        // LUCENENET: CA1859 - Use concrete types when possible for improved performance
+        private readonly JCG.Dictionary<int, NumericDocValues> numericInstances = new JCG.Dictionary<int, NumericDocValues>();
+        private readonly JCG.Dictionary<int, BinaryDocValues> binaryInstances = new JCG.Dictionary<int, BinaryDocValues>();
+        private readonly JCG.Dictionary<int, SortedDocValues> sortedInstances = new JCG.Dictionary<int, SortedDocValues>();
+        private readonly JCG.Dictionary<int, SortedSetRawValues> sortedSetInstances = new JCG.Dictionary<int, SortedSetRawValues>();
+        private readonly JCG.Dictionary<int, IBits> docsWithFieldInstances = new JCG.Dictionary<int, IBits>();
 
         private readonly int maxDoc;
         private readonly AtomicInt64 ramBytesUsed;
