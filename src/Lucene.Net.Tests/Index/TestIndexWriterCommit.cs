@@ -433,6 +433,12 @@ namespace Lucene.Net.Index
                 }
                 catch (Exception t) when (t.IsThrowable())
                 {
+                    // LUCENENET TEMP (#1322 repro): log the EXACT exception that fails the test thread, with
+                    // thread id so it can be correlated with the "Run EXIT: ESCAPED" trace from the same thread.
+                    if (System.Environment.GetEnvironmentVariable("LUCENENET_1322_TRACE") == "1")
+                    {
+                        System.Console.Error.WriteLine($"[1322 t{System.Environment.CurrentManagedThreadId} {J2N.Time.NanoTime() / 1000000}ms] TEST THREAD FAILED: {t.GetType().Name}: {t.Message}\n{t.StackTrace}");
+                    }
                     failed.Value = true;
                     throw RuntimeException.Create(t);
                 }

@@ -977,6 +977,27 @@ namespace Lucene.Net.Index
             /// Run <see cref="DoBody(string)"/> on the provided commit. </summary>
             public virtual object Run(IndexCommit commit)
             {
+                if (!TRACE_1322) return RunInternal(commit);
+                // LUCENENET TEMP (#1322 repro): capture the exact exception that ESCAPES Run (i.e. was NOT
+                // recovered by the retry loop) - this is the ground truth for what fails the test. We do NOT
+                // trace successful returns (they are the overwhelming common case and would bury the signal).
+                try
+                {
+                    return RunInternal(commit);
+                }
+                catch (Exception e)
+                {
+                    // Skip the benign startup case: opening before any commit exists (empty directory).
+                    if (!(e is IndexNotFoundException))
+                    {
+                        Trace1322($"Run EXIT: ESCAPED with {e.GetType().Name}: {e.Message}");
+                    }
+                    throw;
+                }
+            }
+
+            private object RunInternal(IndexCommit commit)
+            {
                 if (commit != null)
                 {
                     if (directory != commit.Directory)
