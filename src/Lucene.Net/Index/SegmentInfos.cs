@@ -1000,6 +1000,10 @@ namespace Lucene.Net.Index
             {
                 if (commit != null)
                 {
+                    // LUCENENET TEMP (#1322): the commit != null path BYPASSES the retry loop entirely - a single
+                    // DoBody with no recovery. If escapes come from here, the bug is that a commit-pinned reopen
+                    // has no retry. (The no-writer test path passes null, so this should normally not fire.)
+                    if (TRACE_1322) Trace1322($"Run: commit != null branch (NO RETRY) for {commit.SegmentsFileName}");
                     if (directory != commit.Directory)
                     {
                         throw new IOException("the specified commit does not match the specified Directory");
