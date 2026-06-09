@@ -916,6 +916,9 @@ namespace Lucene.Net.Index
             Console.Error.WriteLine($"[1322 t{Environment.CurrentManagedThreadId} {J2N.Time.NanoTime() / 1000000}ms] {message}");
         }
 
+        // LUCENENET TEMP (#1322): allow StandardDirectoryReader (same assembly) to emit into the same trace.
+        internal static void Trace1322Public(string message) => Trace1322(message);
+
         // LUCENENET TEMP (#1322): logs EVERY exception DoBody throws (the when-filter is evaluated for all of
         // them, even ones it will not catch), including whether IsIOException() is true. If an exception with
         // IsIOException()==false flies past here, it escapes the retry loop unrecovered - that is the bug.

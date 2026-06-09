@@ -286,6 +286,10 @@ namespace Lucene.Net.Index
                         }
                     }
                     // throw the first exception
+                    if (prior != null && SegmentInfos.TRACE_1322)
+                    {
+                        SegmentInfos.Trace1322Public($"StandardDirectoryReader.Open: ReThrow prior {prior.GetType().Name}: {prior.Message} (segment index i={i}, success={success})");
+                    }
                     IOUtils.ReThrow(prior);
                 }
             }
