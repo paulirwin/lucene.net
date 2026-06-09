@@ -904,6 +904,18 @@ namespace Lucene.Net.Index
         /// </summary>
         private static int defaultGenLookaheadCount = 10;
 
+        // LUCENENET TEMP (issue #1322 repro branch ONLY - DO NOT MERGE): when env var LUCENENET_1322_TRACE=1,
+        // FindSegmentsFile.Run emits diagnostic lines to stderr so a CI repro can capture the EXACT retry
+        // sequence at the moment the #1322 FileNotFound/DirectoryNotFound is thrown. Off by default (zero cost).
+        internal static readonly bool TRACE_1322 =
+            Environment.GetEnvironmentVariable("LUCENENET_1322_TRACE") == "1";
+
+        private static void Trace1322(string message)
+        {
+            // Thread id + timestamp so interleavings across threads are reconstructable.
+            Console.Error.WriteLine($"[1322 t{Environment.CurrentManagedThreadId} {J2N.Time.NanoTime() / 1000000}ms] {message}");
+        }
+
         /// <summary>
         /// Gets or Sets the <see cref="defaultGenLookaheadCount"/>.
         /// <para/>
@@ -1128,6 +1140,7 @@ namespace Lucene.Net.Index
                         }
                         else
                         {
+                            if (TRACE_1322) Trace1322($"GIVE UP (genLookahead {genLookaheadCount} >= {defaultGenLookaheadCount}) gen={gen} lastGen={lastGen} -> RETHROW {exc?.GetType().Name}: {exc?.Message}");
                             // All attempts have failed -- throw first exc:
                             ExceptionDispatchInfo.Capture(exc).Throw(); // LUCENENET: Rethrow to preserve stack details from the original throw
                         }
@@ -1156,10 +1169,12 @@ namespace Lucene.Net.Index
                         {
                             Message("success on " + segmentFileName);
                         }
+                        if (TRACE_1322 && exc != null) Trace1322($"RECOVERED: DoBody success on {segmentFileName} (gen={gen} retryCount={retryCount} useFirstMethod={useFirstMethod} genLookahead={genLookaheadCount}) after earlier {exc.GetType().Name}");
                         return v;
                     }
                     catch (Exception err) when (err.IsIOException())
                     {
+                        if (TRACE_1322) Trace1322($"DoBody FAILED on {segmentFileName}: {err.GetType().Name}: {err.Message} (gen={gen} lastGen={lastGen} retryCount={retryCount} useFirstMethod={useFirstMethod} genLookahead={genLookaheadCount})");
                         // Save the original root cause:
                         if (exc is null)
                         {

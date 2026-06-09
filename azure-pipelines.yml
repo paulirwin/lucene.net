@@ -1,761 +1,104 @@
-# Licensed to the Apache Software Foundation (ASF) under one
-# or more contributor license agreements.  See the NOTICE file
-# distributed with this work for additional information
-# regarding copyright ownership.  The ASF licenses this file
-# to you under the Apache License, Version 2.0 (the
-# "License"); you may not use this file except in compliance
-# with the License.  You may obtain a copy of the License at
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-# KIND, either express or implied.  See the License for the
-# specific language governing permissions and limitations
-# under the License.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-name: 'vNext$(rev:.r)' # Format for build number (will be overridden)
+# =====================================================================================================
+# FOCUSED #1322 REPRODUCTION PIPELINE - issue/1322-repro branch ONLY. DO NOT MERGE TO master.
+#
+# This intentionally REPLACES the normal multi-stage build/test pipeline with a lean one that does
+# exactly one thing: run Lucene.Net.Index.TestIndexWriterCommit.TestCommitThreadSafety heavily, in a
+# repeat loop, across all target frameworks and the architectures where #1322 has been observed
+# (Linux x64, Windows x64, Windows x86), to try to reproduce the intermittent .NET 10 failure under load.
+#
+# It builds ONLY the _I-J test shard (which contains TestIndexWriterCommit) and runs ONLY that one test,
+# to keep iterations fast so we can do many of them per agent-minute. Diagnostics are enabled via
+# LUCENENET_1322_TRACE=1 (added on this branch in SegmentInfos.FindSegmentsFile.Run) so that when the
+# test fails, the captured console output shows the EXACT retry sequence at the moment of failure.
+# =====================================================================================================
 
-# DevOps Setup: Define the following pipeline level variables in Azure DevOps build pipeline
-
-# ArtifactFeedID: (Optional - set to your Azure DevOps Artifact (NuGet) feed. If not provided, publish job will be skipped.)
-# BuildConfiguration: (Optional. Defaults to 'Release')
-# BuildPlatform: (Optional. Defaults to 'Any CPU')
-# GenerateDocs: (Optional. Only builds documentation website if set to 'true'.)
-# GenerateWebsite: (Optional. Only builds lucene.net website if set to 'true'.)
-# IsRelease: (Optional. By default the Release job is disabled, setting this to 'true' will enable it)
-# GeneratePackages: (Optional. Defaults to 'true'. Setting to 'false' will cut about 1 minute from the build time by skipping packing the NuGet files and subsequent artiact upload. If ArtifactFeedID is provided or IsRelease is 'true', this setting has no effect.)
-
-# Versioning Variables
-
-# BuildCounterSeed: (Optional - Set in conjunction with VersionSuffix, will cause the build counter to begin at this value. Note that it is set once, to reset is an API call.)
-# PackageVersion: (Optional - This can be used to explicitly set the whole version number to a specific version, i.e. 4.8.0-beta00005. It overrides all other version settings.)
-# PreReleaseCounterPattern: (Optional. Set to '0000000000' in ci pipeline or '00000' in release pipeline. The default is '0000000000'. This setting has no effect if VersionSuffix is ''.)
-# VersionSuffix: (Optional. Defaults to 'ci'. Set to 'beta' or 'rc' or '' in production pipeline.)
-
-# Testing variables
-
-# RunTests: 'true' (Optional - set to 'false' to disable test jobs - useful for debugging. If not provided, tests will be run.)
-# AssertsEnabled: 'true' (Optional - set to 'false' to run tests without asserts, which is less thorough. This can speed up testing and verify the application will run without asserts.)
-# IsNightly: 'false' (Optional - set to 'true' to run additional tests for the nightly build)
-# IsWeekly: 'false' (Optional - set to 'true' to run additional tests for the weekly build)
-# RunSlowTests: 'true' (Optional - set to 'false' to skip slow tests to make testing time shorter)
-# RunAwaitsFixTests: 'true' (Optional - set to 'false' to disable running flakey tests)
-# Codec: 'random' (Optional - set to a specific codec to test the same codec throughout all tests)
-# DocValuesFormat: 'random' (Optional - set to a specific doc values format to test the same codec throughout all tests)
-# PostingsFormat: 'random' (Optional - set to a specific postings format to test the same codec throughout all tests)
-# Directory: 'random' (Optional - set to a specific directory implementation to test the same codec throughout all tests)
-# Verbose: 'false' (Optional - set to true for verbose logging output)
-# Multiplier: '1' (Optional - the number of iterations to multiply applicable tests by)
-# DisplayFullName: 'true' (Optional - set to 'false' to display only the test name instead of the full name with class and method)
-# FailOnTestFixtureOneTimeSetUpError: 'true' (Optional - set to 'false' to allow tests to pass if the test fixture (class) has a OneTimeSetUp failure.)
-
-# RunX86Tests: 'false' (Optional - set to 'true' to enable x86 tests)
+trigger: none   # manual runs only
+pr: none
 
 variables:
-- name: BuildCounter
-  value: $[counter(variables['VersionSuffix'],coalesce(variables['BuildCounterSeed'], 1250))]
 - name: DotNetSDKVersion
   value: '10.0.100'
-- name: DocumentationArtifactName
-  value: 'docs'
-- name: DocumentationArtifactZipFileName
-  value: 'documentation.zip'
-- name: WebsiteArtifactName
-  value: 'website'
-- name: WebsiteArtifactZipFileName
-  value: 'website.zip'
-- name: BinaryArtifactName
-  value: 'testbinaries'
-- name: NuGetArtifactName
-  value: 'nuget'
-- name: DebugArtifactName # For .pdb symbols
-  value: 'debug'
-- name: ReleaseArtifactName
-  value: 'release'
-- name: TestResultsArtifactName
-  value: 'testresults'
-- name: VersionArtifactName
-  value: 'version'
-- name: BuildNumberFileName
-  value: 'buildNumber.txt'
-- name: PackageVersionFileName
-  value: 'packageVersion.txt'
-- name: FileVersionFileName
-  value: 'fileVersion.txt'
-- name: TestSettingsFileName
-  value: 'lucene.testsettings.json'
-- name: BuildDirectory # Where the build scripts and configs are
-  value: '$(System.DefaultWorkingDirectory)/.build'
-- name: PublishDirectory # Test binaries directory
-  value: '$(Build.ArtifactStagingDirectory)/$(BinaryArtifactName)'
-- name: NuGetArtifactDirectory # NuGet binaries directory
-  value: '$(Build.ArtifactStagingDirectory)/$(NuGetArtifactName)'
-
+- name: DotNetSDK9Version
+  value: '9.0.100'
+- name: DotNetSDK8Version
+  value: '8.0.100'
+- name: TestProject
+  value: 'src/Lucene.Net.Tests._I-J/Lucene.Net.Tests._I-J.csproj'
+- name: TestFilter
+  value: 'FullyQualifiedName~Lucene.Net.Index.TestIndexWriterCommit.TestCommitThreadSafety'
+# Number of times to run the test per framework, per job. Override at queue time.
+- name: RepeatCount
+  value: '200'
 
 stages:
-- stage: Build_Stage
-  displayName: 'Build Stage:'
+- stage: Repro_Stage
+  displayName: 'Repro #1322:'
   jobs:
 
-  - job: Build
+  # ---------------------------------------------------------------------------------------------------
+  # Linux x64 - net10.0, net9.0, net8.0
+  # ---------------------------------------------------------------------------------------------------
+  - job: Linux_x64
+    displayName: 'Linux x64'
     pool:
-      vmImage: 'windows-latest'
-
-    steps:
-
-    - checkout: self # self represents the repo where the initial Pipelines YAML file was found
-      fetchDepth: '1'  # the depth of commits to ask Git to fetch
-
-    - pwsh: |
-        $configuration = if ($env:BUILDCONFIGURATION) { $env:BUILDCONFIGURATION } else { "Release" }
-        Write-Host "##vso[task.setvariable variable=BuildConfiguration;]$configuration"
-        $platform = if ($env:BUILDPLATFORM) { $env:BUILDPLATFORM } else { "Any CPU" }
-        Write-Host "##vso[task.setvariable variable=BuildPlatform;]$platform"
-        $isRelease = if ($env:ISRELEASE -eq 'true') { 'true' } else { 'false' }
-        Write-Host "##vso[task.setvariable variable=IsRelease;]$isRelease"
-        $isNightly = if ($env:ISNIGHTLY -eq 'true') { 'true' } else { 'false' }
-        Write-Host "##vso[task.setvariable variable=IsNightly;]$isNightly"
-        $isWeekly = if ($env:ISWEEKLY -eq 'true') { 'true' } else { 'false' }
-        Write-Host "##vso[task.setvariable variable=IsWeekly;]$isWeekly"
-        $runPack = if ($env:ISRELEASE -eq 'true' -or $env:ARTIFACTFEEDID -ne '' -or $env:GENERATEPACKAGES -ne 'false') { 'true' } else { 'false' }
-        Write-Host "##vso[task.setvariable variable=RunPack;]$runPack"
-      displayName: 'Setup Default Variable Values'
-
-    - template: '.build/azure-templates/install-dotnet-sdk.yml'
-      parameters:
-        sdkVersion: '$(DotNetSDKVersion)'
-
-    - pwsh: |
-        Import-Module "$(BuildDirectory)/psake/psake.psm1"
-        $primaryCommand = if ($env:RUNPACK -ne 'false') { 'Pack' } else { 'Compile' }
-        $parameters = @{}
-        $properties = @{
-            backupFiles='false';
-            nugetPackageDirectory='$(NuGetArtifactDirectory)'
-        }
-        [string[]]$tasks = @($primaryCommand)
-        Invoke-Psake $(BuildDirectory)/runbuild.ps1 -Task $tasks -properties $properties -parameters $parameters
-        exit !($psake.build_success)
-      displayName: 'PSake Build and Pack'
-
-    #- template: '.build/azure-templates/show-all-environment-variables.yml' # Uncomment for debugging
-
-    - pwsh: |
-        $dir = '$(Build.ArtifactStagingDirectory)/$(VersionArtifactName)'
-        if (!(Test-Path $dir)) { New-Item -ItemType Directory -Path "$dir" -Force }
-        '$(PackageVersion)' | Out-File -FilePath "$dir/$(PackageVersionFileName)" -Force
-        '$(FileVersion)' | Out-File -FilePath "$dir/$(FileVersionFileName)" -Force
-        '$(Build.BuildNumber)' | Out-File -FilePath "$dir/$(BuildNumberFileName)" -Force
-      displayName: 'Persist Versions to Files'
-
-    - pwsh: |
-        # Generate a lucene.testsettings.json file for use with the test framework
-        $assert = if ($env:AssertsEnabled -ne 'false') { 'true' } else { 'false' }
-        $nightly = if ($env:IsNightly -eq 'true') { 'true' } else { 'false' }
-        $weekly = if ($env:IsWeekly -eq 'true') { 'true' } else { 'false' }
-        $slow = if ($env:RunSlowTests -ne 'false') { 'true' } else { 'false' }
-        $awaitsFix = if ($env:RunAwaitsFixTests -ne 'false') { 'true' } else { 'false' }
-        $codec = if ($env:Codec -eq $null) { 'random' } else { $env:Codec }
-        $docValuesFormat = if ($env:DocValuesFormat -eq $null) { 'random' } else { $env:DocValuesFormat }
-        $postingsFormat = if ($env:PostingsFormat -eq $null) { 'random' } else { $env:PostingsFormat }
-        $directory = if ($env:Directory -eq $null) { 'random' } else { $env:Directory }
-        $verbose = if ($env:Verbose -eq 'true') { 'true' } else { 'false' }
-        $multiplier = if ($env:Multiplier -eq $null) { '1' } else { $env:Multiplier }
-        $failOnTestFixtureOneTimeSetUpError = if ($env.FailOnTestFixtureOneTimeSetUpError -eq 'false') { 'false' } else { 'true' }
-        $fileText = "{`n`t" +
-            """assert"": ""$assert"",`n`t" +
-            """tests"": {`n`t`t" +
-                """nightly"": ""$nightly"",`n`t`t" +
-                """weekly"": ""$weekly"",`n`t`t" +
-                """slow"": ""$slow"",`n`t`t" +
-                """awaitsfix"": ""$awaitsFix"",`n`t`t" +
-                """codec"": ""$codec"",`n`t`t" +
-                """docvaluesformat"": ""$docValuesFormat"",`n`t`t" +
-                """postingsformat"": ""$postingsFormat"",`n`t`t" +
-                """directory"": ""$directory"",`n`t`t" +
-                """verbose"": ""$verbose"",`n`t`t" +
-                """multiplier"": ""$multiplier"",`n`t`t" +
-                """failontestfixtureonetimesetuperror"": ""$failOnTestFixtureOneTimeSetUpError""`n`t" +
-            "}`n" +
-        "}"
-        Out-File -filePath "$(Build.ArtifactStagingDirectory)/$(TestSettingsFileName)" -encoding UTF8 -inputObject $fileText
-      displayName: 'Persist Test Settings to lucene.testsettings.json'
-      condition: and(succeeded(), ne(variables['RunTests'], 'false'))
-
-    # If this is a release pipeline, copy the version.props files as a version artifact, which will
-    # be included in the release.
-    - task: CopyFiles@2
-      displayName: 'Copy version.props Files to: /$(VersionArtifactName)'
-      inputs:
-        SourceFolder: '$(System.DefaultWorkingDirectory)'
-        Contents: |
-          version.props
-        TargetFolder: '$(Build.ArtifactStagingDirectory)/$(VersionArtifactName)'
-      condition: and(succeeded(), eq(variables['IsRelease'], 'true'))
-
-    - task: PublishPipelineArtifact@1
-      displayName: 'Publish Artifact: $(VersionArtifactName)'
-      inputs:
-        targetPath: '$(Build.ArtifactStagingDirectory)/$(VersionArtifactName)'
-        artifact: '$(VersionArtifactName)'
-        publishLocation: 'pipeline'
-
-    # Copy the .pdb files as build artifacts, which will
-    # later be used to push to the Azure Artifacts symbol server.
-    - task: CopyFiles@2
-      displayName: 'Copy .pdb Files to: /$(DebugArtifactName)'
-      inputs:
-        SourceFolder: '$(System.DefaultWorkingDirectory)'
-        Contents: '**/bin/$(BuildConfiguration)/**/*.pdb'
-        TargetFolder: '$(Build.ArtifactStagingDirectory)/$(DebugArtifactName)'
-      condition: and(succeeded(), ne(variables['ArtifactFeedID'], ''))
-
-    - task: PublishPipelineArtifact@1
-      displayName: 'Publish Artifact: $(DebugArtifactName)'
-      inputs:
-        targetPath: '$(Build.ArtifactStagingDirectory)/$(DebugArtifactName)'
-        artifact: '$(DebugArtifactName)'
-        publishLocation: 'pipeline'
-      condition: and(succeeded(), ne(variables['ArtifactFeedID'], ''))
-
-    - task: PublishPipelineArtifact@1
-      displayName: 'Publish Artifact: $(NuGetArtifactName)'
-      inputs:
-        targetPath: '$(NuGetArtifactDirectory)'
-        artifact: '$(NuGetArtifactName)'
-        publishLocation: 'pipeline'
-      condition: and(succeeded(), ne(variables['RunPack'], 'false'))
-
-    - pwsh: |
-        Remove-Item -Path "$(NuGetArtifactDirectory)/*" -Recurse -Force
-      displayName: 'Delete temp publish location: $(NuGetArtifactDirectory)'
-      condition: and(succeeded(), ne(variables['RunPack'], 'false'))
-
-    - template: '.build/azure-templates/publish-test-binaries.yml'
-      parameters:
-        publishDirectory: $(PublishDirectory)
-        framework: 'net10.0'
-        binaryArtifactName: '$(BinaryArtifactName)'
-        testSettingsFilePath: '$(Build.ArtifactStagingDirectory)/$(TestSettingsFileName)'
-        configuration: '$(BuildConfiguration)'
-        platform: '$(BuildPlatform)'
-
-    - template: '.build/azure-templates/publish-test-binaries.yml'
-      parameters:
-        publishDirectory: $(PublishDirectory)
-        framework: 'net9.0'
-        binaryArtifactName: '$(BinaryArtifactName)'
-        testSettingsFilePath: '$(Build.ArtifactStagingDirectory)/$(TestSettingsFileName)'
-        configuration: '$(BuildConfiguration)'
-        platform: '$(BuildPlatform)'
-
-    - template: '.build/azure-templates/publish-test-binaries.yml'
-      parameters:
-        publishDirectory: $(PublishDirectory)
-        framework: 'net8.0'
-        binaryArtifactName: '$(BinaryArtifactName)'
-        testSettingsFilePath: '$(Build.ArtifactStagingDirectory)/$(TestSettingsFileName)'
-        configuration: '$(BuildConfiguration)'
-        platform: '$(BuildPlatform)'
-
-    - template: '.build/azure-templates/publish-test-binaries.yml'
-      parameters:
-        publishDirectory: $(PublishDirectory)
-        framework: 'net472'
-        binaryArtifactName: '$(BinaryArtifactName)'
-        testSettingsFilePath: '$(Build.ArtifactStagingDirectory)/$(TestSettingsFileName)'
-        configuration: '$(BuildConfiguration)'
-        platform: '$(BuildPlatform)'
-
-    - template: '.build/azure-templates/publish-test-binaries.yml'
-      parameters:
-        publishDirectory: $(PublishDirectory)
-        framework: 'net48'
-        binaryArtifactName: '$(BinaryArtifactName)'
-        testSettingsFilePath: '$(Build.ArtifactStagingDirectory)/$(TestSettingsFileName)'
-        configuration: '$(BuildConfiguration)'
-        platform: '$(BuildPlatform)'
-
-  - job: Docs
-    condition: and(succeeded(), eq(variables['GenerateDocs'], 'true'))
-    pool:
-      vmImage: 'windows-latest'
-
-    steps:
-    - template: '.build/azure-templates/install-dotnet-sdk.yml'
-      parameters:
-        sdkVersion: '$(DotNetSDKVersion)'
-
-    - pwsh: |
-         $(Build.SourcesDirectory)/websites/apidocs/docs.ps1 -LuceneNetVersion $(PackageVersion) -Clean -BaseUrl https://lucenenet.apache.org/docs/
-      errorActionPreference: 'continue'
-      ignoreLASTEXITCODE: 'true'
-      failOnStderr: 'false'
-      displayName: 'Generate Documentation'
-
-    - task: ArchiveFiles@2
-      displayName: 'Zip Documentation Files'
-      inputs:
-        rootFolderOrFile: '$(Build.SourcesDirectory)/websites/apidocs/_site'
-        includeRootFolder: false
-        archiveFile: '$(Build.ArtifactStagingDirectory)/$(DocumentationArtifactName)/$(DocumentationArtifactZipFileName)'
-
-    - task: PublishBuildArtifacts@1
-      displayName: 'Publish Artifact: $(DocumentationArtifactName)'
-      inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(DocumentationArtifactName)'
-        ArtifactName: '$(DocumentationArtifactName)'
-
-  - job: Website
-    condition: and(succeeded(), eq(variables['GenerateWebsite'], 'true'))
-    pool:
-      vmImage: 'windows-latest'
-
-    steps:
-    - pwsh: |
-         $(Build.SourcesDirectory)/websites/site/site.ps1 0 1
-      errorActionPreference: 'continue'
-      ignoreLASTEXITCODE: 'true'
-      failOnStderr: 'false'
-      displayName: 'Generate Website'
-
-    - task: ArchiveFiles@2
-      displayName: 'Zip Website Files'
-      inputs:
-        rootFolderOrFile: '$(Build.SourcesDirectory)/websites/site/_site'
-        includeRootFolder: false
-        archiveFile: '$(Build.ArtifactStagingDirectory)/$(WebsiteArtifactName)/$(WebsiteArtifactZipFileName)'
-
-    - task: PublishBuildArtifacts@1
-      displayName: 'Publish Artifact: $(WebsiteArtifactName)'
-      inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(WebsiteArtifactName)'
-        ArtifactName: '$(WebsiteArtifactName)'
-
-
-- stage: Test_Stage
-  displayName: 'Test Stage:'
-  jobs:
-
-  - job: Test_net10_0_x64
-    condition: and(succeeded(), ne(variables['RunTests'], 'false'))
+      vmImage: 'ubuntu-latest'
+    timeoutInMinutes: 120
     strategy:
       matrix:
-        Windows:
-          osName: 'Windows'
-          imageName: 'windows-latest'
-          maximumParallelJobs: 8
-          maximumAllowedFailures: 0 # Maximum allowed failures for a successful build
-        Linux:
-          osName: 'Linux'
-          imageName: 'ubuntu-latest'
-          maximumParallelJobs: 7
-          maximumAllowedFailures: 0 # Maximum allowed failures for a successful build
-        macOS:
-          osName: 'macOS'
-          imageName: 'macOS-latest'
-          maximumParallelJobs: 7
-          maximumAllowedFailures: 0 # Maximum allowed failures for a successful build
-    displayName: 'Test net10.0,x64 on'
-    pool:
-      vmImage: $(imageName)
-    steps:
-      - template: '.build/azure-templates/run-tests-on-os.yml'
-        parameters:
-          osName: $(osName)
+        net10_0:
           framework: 'net10.0'
-          vsTestPlatform: 'x64'
-          testBinariesArtifactName: '$(TestBinariesArtifactName)'
-          nugetArtifactName: '$(NuGetArtifactName)'
-          testResultsArtifactName: '$(TestResultsArtifactName)'
-          maximumParallelJobs: $(maximumParallelJobs)
-          maximumAllowedFailures: $(maximumAllowedFailures)
-          dotNetSdkVersion: '$(DotNetSDKVersion)'
-
-  - job: Test_net10_0_x86 # Only run Nightly or if explicitly enabled with RunX86Tests
-    condition: and(succeeded(), ne(variables['RunTests'], 'false'), or(eq(variables['IsNightly'], 'true'), eq(variables['RunX86Tests'], 'true')))
-    strategy:
-      matrix:
-        Windows:
-          osName: 'Windows'
-          imageName: 'windows-latest'
-          maximumParallelJobs: 8
-          maximumAllowedFailures: 0 # Maximum allowed failures for a successful build
-    displayName: 'Test net10.0,x86 on'
-    pool:
-      vmImage: $(imageName)
-    steps:
-      - template: '.build/azure-templates/run-tests-on-os.yml'
-        parameters:
-          osName: $(osName)
-          framework: 'net10.0'
-          vsTestPlatform: 'x86'
-          testBinariesArtifactName: '$(TestBinariesArtifactName)'
-          nugetArtifactName: '$(NuGetArtifactName)'
-          testResultsArtifactName: '$(TestResultsArtifactName)'
-          maximumParallelJobs: $(maximumParallelJobs)
-          maximumAllowedFailures: $(maximumAllowedFailures)
-          dotNetSdkVersion: '$(DotNetSDKVersion)'
-
-  - job: Test_net9_0_x64
-    condition: and(succeeded(), ne(variables['RunTests'], 'false'))
-    strategy:
-      matrix:
-        Windows:
-          osName: 'Windows'
-          imageName: 'windows-latest'
-          maximumParallelJobs: 8
-          maximumAllowedFailures: 0 # Maximum allowed failures for a successful build
-        Linux:
-          osName: 'Linux'
-          imageName: 'ubuntu-latest'
-          maximumParallelJobs: 7
-          maximumAllowedFailures: 0 # Maximum allowed failures for a successful build
-        macOS:
-          osName: 'macOS'
-          imageName: 'macOS-latest'
-          maximumParallelJobs: 7
-          maximumAllowedFailures: 0 # Maximum allowed failures for a successful build
-    displayName: 'Test net9.0,x64 on'
-    pool:
-      vmImage: $(imageName)
-    steps:
-    - template: '.build/azure-templates/run-tests-on-os.yml'
-      parameters:
-        osName: $(osName)
-        framework: 'net9.0'
-        vsTestPlatform: 'x64'
-        testBinariesArtifactName: '$(TestBinariesArtifactName)'
-        nugetArtifactName: '$(NuGetArtifactName)'
-        testResultsArtifactName: '$(TestResultsArtifactName)'
-        maximumParallelJobs: $(maximumParallelJobs)
-        maximumAllowedFailures: $(maximumAllowedFailures)
-        dotNetSdkVersion: '9.0.308'
-
-  - job: Test_net9_0_x86 # Only run Nightly or if explicitly enabled with RunX86Tests
-    condition: and(succeeded(), ne(variables['RunTests'], 'false'), or(eq(variables['IsNightly'], 'true'), eq(variables['RunX86Tests'], 'true')))
-    strategy:
-      matrix:
-        Windows:
-          osName: 'Windows'
-          imageName: 'windows-latest'
-          maximumParallelJobs: 8
-          maximumAllowedFailures: 0 # Maximum allowed failures for a successful build
-    displayName: 'Test net9.0,x86 on'
-    pool:
-      vmImage: $(imageName)
-    steps:
-      - template: '.build/azure-templates/run-tests-on-os.yml'
-        parameters:
-          osName: $(osName)
+        net9_0:
           framework: 'net9.0'
-          vsTestPlatform: 'x86'
-          testBinariesArtifactName: '$(TestBinariesArtifactName)'
-          nugetArtifactName: '$(NuGetArtifactName)'
-          testResultsArtifactName: '$(TestResultsArtifactName)'
-          maximumParallelJobs: $(maximumParallelJobs)
-          maximumAllowedFailures: $(maximumAllowedFailures)
-          dotNetSdkVersion: '9.0.308'
-
-  - job: Test_net8_0_x64
-    condition: and(succeeded(), ne(variables['RunTests'], 'false'))
-    strategy:
-      matrix:
-        Windows:
-          osName: 'Windows'
-          imageName: 'windows-latest'
-          maximumParallelJobs: 8
-          maximumAllowedFailures: 0 # Maximum allowed failures for a successful build
-        Linux:
-          osName: 'Linux'
-          imageName: 'ubuntu-latest'
-          maximumParallelJobs: 7
-          maximumAllowedFailures: 0 # Maximum allowed failures for a successful build
-        macOS:
-          osName: 'macOS'
-          imageName: 'macOS-latest'
-          maximumParallelJobs: 7
-          maximumAllowedFailures: 0 # Maximum allowed failures for a successful build
-    displayName: 'Test net8.0,x64 on'
-    pool:
-      vmImage: $(imageName)
+        net8_0:
+          framework: 'net8.0'
     steps:
-    - template: '.build/azure-templates/run-tests-on-os.yml'
+    - template: '.build/azure-templates/repro-1322-steps.yml'
       parameters:
-        osName: $(osName)
-        framework: 'net8.0'
-        vsTestPlatform: 'x64'
-        testBinariesArtifactName: '$(TestBinariesArtifactName)'
-        nugetArtifactName: '$(NuGetArtifactName)'
-        testResultsArtifactName: '$(TestResultsArtifactName)'
-        maximumParallelJobs: $(maximumParallelJobs)
-        maximumAllowedFailures: $(maximumAllowedFailures)
-        dotNetSdkVersion: '$(DotNetSDKVersion)'
+        framework: '$(framework)'
+        platform: 'x64'
 
-  - job: Test_net8_0_x86 # Only run Nightly or if explicitly enabled with RunX86Tests
-    condition: and(succeeded(), ne(variables['RunTests'], 'false'), or(eq(variables['IsNightly'], 'true'), eq(variables['RunX86Tests'], 'true')))
-    strategy:
-      matrix:
-        Windows:
-          osName: 'Windows'
-          imageName: 'windows-latest'
-          maximumParallelJobs: 8
-          maximumAllowedFailures: 0 # Maximum allowed failures for a successful build
-    displayName: 'Test net8.0,x86 on'
-    pool:
-      vmImage: $(imageName)
-    steps:
-    - template: '.build/azure-templates/run-tests-on-os.yml'
-      parameters:
-        osName: $(osName)
-        framework: 'net8.0'
-        vsTestPlatform: 'x86'
-        testBinariesArtifactName: '$(TestBinariesArtifactName)'
-        nugetArtifactName: '$(NuGetArtifactName)'
-        testResultsArtifactName: '$(TestResultsArtifactName)'
-        maximumParallelJobs: $(maximumParallelJobs)
-        maximumAllowedFailures: $(maximumAllowedFailures)
-        dotNetSdkVersion: '$(DotNetSDKVersion)'
-
-  - job: Test_net472_x64
-    condition: and(succeeded(), ne(variables['RunTests'], 'false'))
-    strategy:
-      matrix:
-        Windows:
-          osName: 'Windows'
-          imageName: 'windows-latest'
-          maximumParallelJobs: 8
-          maximumAllowedFailures: 0 # Maximum allowed failures for a successful build
-    displayName: 'Test net472,x64 on'
-    pool:
-      vmImage: $(imageName)
-    steps:
-    - template: '.build/azure-templates/run-tests-on-os.yml'
-      parameters:
-        osName: $(osName)
-        framework: 'net472'
-        vsTestPlatform: 'x64'
-        testBinariesArtifactName: '$(TestBinariesArtifactName)'
-        nugetArtifactName: '$(NuGetArtifactName)'
-        testResultsArtifactName: '$(TestResultsArtifactName)'
-        maximumParallelJobs: $(maximumParallelJobs)
-        maximumAllowedFailures: $(maximumAllowedFailures)
-        dotNetSdkVersion: '$(DotNetSDKVersion)'
-
-  - job: Test_net472_x86 # Only run Nightly or if explicitly enabled with RunX86Tests
-    condition: and(succeeded(), ne(variables['RunTests'], 'false'), or(eq(variables['IsNightly'], 'true'), eq(variables['RunX86Tests'], 'true')))
-    strategy:
-      matrix:
-        Windows:
-          osName: 'Windows'
-          imageName: 'windows-latest'
-          maximumParallelJobs: 8
-          maximumAllowedFailures: 0 # Maximum allowed failures for a successful build
-    displayName: 'Test net472,x86 on'
-    pool:
-      vmImage: $(imageName)
-    steps:
-    - template: '.build/azure-templates/run-tests-on-os.yml'
-      parameters:
-        osName: $(osName)
-        framework: 'net472'
-        vsTestPlatform: 'x86'
-        testBinariesArtifactName: '$(TestBinariesArtifactName)'
-        nugetArtifactName: '$(NuGetArtifactName)'
-        testResultsArtifactName: '$(TestResultsArtifactName)'
-        maximumParallelJobs: $(maximumParallelJobs)
-        maximumAllowedFailures: $(maximumAllowedFailures)
-        dotNetSdkVersion: '$(DotNetSDKVersion)'
-
-  - job: Test_net48_Windows_x64
-    condition: and(succeeded(), ne(variables['RunTests'], 'false'))
-    displayName: 'Test net48,x64 on Windows'
+  # ---------------------------------------------------------------------------------------------------
+  # Windows x64 - net10.0, net9.0, net8.0, net48, net472
+  # ---------------------------------------------------------------------------------------------------
+  - job: Windows_x64
+    displayName: 'Windows x64'
     pool:
       vmImage: 'windows-latest'
+    timeoutInMinutes: 120
+    strategy:
+      matrix:
+        net10_0:
+          framework: 'net10.0'
+        net9_0:
+          framework: 'net9.0'
+        net8_0:
+          framework: 'net8.0'
+        net48:
+          framework: 'net48'
+        net472:
+          framework: 'net472'
     steps:
-    - template: '.build/azure-templates/run-tests-on-os.yml'
+    - template: '.build/azure-templates/repro-1322-steps.yml'
       parameters:
-        osName: 'Windows'
-        framework: 'net48'
-        vsTestPlatform: 'x64'
-        testBinariesArtifactName: '$(TestBinariesArtifactName)'
-        nugetArtifactName: '$(NuGetArtifactName)'
-        testResultsArtifactName: '$(TestResultsArtifactName)'
-        maximumParallelJobs: 8
-        maximumAllowedFailures: 0 # Maximum allowed failures for a successful build
-        dotNetSdkVersion: '$(DotNetSDKVersion)'
+        framework: '$(framework)'
+        platform: 'x64'
 
-  - job: Test_net48_Windows_x86 # Only run Nightly or if explicitly enabled with RunX86Tests
-    condition: and(succeeded(), ne(variables['RunTests'], 'false'), or(eq(variables['IsNightly'], 'true'), eq(variables['RunX86Tests'], 'true')))
-    displayName: 'Test net48,x86 on Windows'
-    pool:
-      vmImage: 'windows-latest'
-    steps:
-    - template: '.build/azure-templates/run-tests-on-os.yml'
-      parameters:
-        osName: 'Windows'
-        framework: 'net48'
-        vsTestPlatform: 'x86'
-        testBinariesArtifactName: '$(TestBinariesArtifactName)'
-        nugetArtifactName: '$(NuGetArtifactName)'
-        testResultsArtifactName: '$(TestResultsArtifactName)'
-        maximumParallelJobs: 8
-        maximumAllowedFailures: 0 # Maximum allowed failures for a successful build
-        dotNetSdkVersion: '$(DotNetSDKVersion)'
-
-
-- stage: Publish_Stage
-  displayName: 'Publish Stage:'
-  jobs:
-
-  # Optional job to push to Azure Artifact feed. Just pass in
-  # the GUID of the artifact feed as ArtifactFeedID to enable.
-  - job: Publish_Azure_Artifacts
-    condition: and(succeeded(), ne(variables['ArtifactFeedID'], ''))
-    pool:
-      vmImage: 'windows-latest'
-
-    steps:
-      # We checkout here because we need to publish the source code along with the symbols for debugging
-    - checkout: self # self represents the repo where the initial Pipelines YAML file was found
-      fetchDepth: '1'  # the depth of commits to ask Git to fetch
-
-    - template: '.build/azure-templates/show-all-environment-variables.yml'
-
-    - task: DownloadPipelineArtifact@0
-      displayName: 'Download Build Artifacts: $(VersionArtifactName)'
-      inputs:
-        artifactName: '$(VersionArtifactName)'
-        targetPath: '$(System.DefaultWorkingDirectory)/$(VersionArtifactName)'
-
-      # For debugging this pipeline
-    #- pwsh: |
-    #    Get-ChildItem -Path $(System.DefaultWorkingDirectory)
-    #    Get-ChildItem -Path '$(VersionArtifactName)'
-
-      # NOTE: We are setting Build.BuildNumber here to the NuGet package version to work around the limitation that
-      # the version cannot be passed to the Index Sources & Publish Symbols task.
-    - pwsh: |
-        $version = Get-Content '$(VersionArtifactName)/$(PackageVersionFileName)' -Raw
-        Write-Host "##vso[task.setvariable variable=PackageVersion;]$version"
-        Write-Host "##vso[build.updatebuildnumber]$version"
-      displayName: 'Read PackageVersion from File to Build.BuildNumber'
-    - template: '.build/azure-templates/show-all-environment-variables.yml'
-
-    - template: '.build/azure-templates/publish-nuget-packages.yml'
-      parameters:
-        artifactFeedID: '$(ArtifactFeedID)'
-        nugetArtifactName: '$(NuGetArtifactName)'
-        debugArtifactName: '$(DebugArtifactName)'
-
-- stage: Release_Stage
-  displayName: 'Release Stage:'
-  jobs:
-  - job: Release
-    condition: and(succeeded(), eq(variables['IsRelease'], 'true'))
-    displayName: 'Build Release Artifacts for [VOTE]'
-    pool:
-      vmImage: 'windows-latest'
-
-    steps:
-    # We checkout here because we need to publish the source code along with the binaries per Apache's releae policy
-    - checkout: self # self represents the repo where the initial Pipelines YAML file was found
-      fetchDepth: '1'  # the depth of commits to ask Git to fetch
-
-    - template: '.build/azure-templates/show-all-environment-variables.yml'
-
-
-    - task: 'DownloadPipelineArtifact@0'
-      displayName: 'Download Build Artifacts: $(NuGetArtifactName)'
-      inputs:
-        artifactName: '$(NuGetArtifactName)'
-        targetPath: '$(Build.ArtifactStagingDirectory)/$(NuGetArtifactName)'
-
-
-    - task: DownloadPipelineArtifact@0
-      displayName: 'Download Build Artifacts: $(VersionArtifactName)'
-      inputs:
-        artifactName: '$(VersionArtifactName)'
-        targetPath: '$(Build.ArtifactStagingDirectory)/$(VersionArtifactName)'
-
-    - template: '.build/azure-templates/show-all-files.yml' # Uncomment for debugging
-
-      # NOTE: We are setting Build.BuildNumber here to the NuGet package version to work around the limitation that
-      # the version cannot be passed to the Index Sources & Publish Symbols task.
-    - pwsh: |
-        $version = Get-Content '$(Build.ArtifactStagingDirectory)/$(VersionArtifactName)/$(PackageVersionFileName)' -Raw
-        $vcsLabel = 'Lucene.Net_' + $version.Replace('.', '_').Replace('-', '_')
-        Write-Host "##vso[task.setvariable variable=VCSLabel;]$vcsLabel"
-        Write-Host "##vso[task.setvariable variable=PackageVersion;]$version"
-        Write-Host "##vso[build.updatebuildnumber]$version"
-      displayName: 'Build VCS Label and Rehydrate Version Variables'
-
-    - pwsh: |
-        [string[]]$files = @('version.props')
-        foreach ($file in $files) {
-            Copy-Item -Path "$(Build.ArtifactStagingDirectory)/$(VersionArtifactName)/$file" -Destination "$(Build.SourcesDirectory)/$file" -Force -ErrorAction Continue
-        }
-      displayName: 'Update version.props to build only version $(PackageVersion)'
-
-    - template: '.build/azure-templates/show-all-environment-variables.yml'
-
-    - task: CopyFiles@2
-      displayName: 'Copy Source Code Files to: $(Build.ArtifactStagingDirectory)/srctemp'
-      inputs:
-        SourceFolder: '$(Build.SourcesDirectory)'
-        Contents: |
-         **
-         !.git/**/*
-         !.github/**/*
-         !branding/**/*
-         !_artifacts/**/*
-         !src/**/bin/**/*
-         !src/**/obj/**/*
-         !websites/**/*
-         branding/logo/lucene-net-icon-128x128.png
-        TargetFolder: '$(Build.ArtifactStagingDirectory)/srctemp'
-
-    - task: ArchiveFiles@2
-      displayName: 'Archive Source Code Files'
-      inputs:
-        rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/srctemp'
-        includeRootFolder: false
-        archiveFile: '$(Build.ArtifactStagingDirectory)/$(ReleaseArtifactName)/Apache-Lucene.Net-$(PackageVersion).src.zip'
-
-    - task: CopyFiles@2
-      displayName: 'Copy License/Notice Files to: $(NuGetArtifactName)'
-      inputs:
-        SourceFolder: '$(Build.SourcesDirectory)'
-        Contents: |
-         LICENSE.txt
-         NOTICE.txt
-        TargetFolder: '$(Build.ArtifactStagingDirectory)/$(NuGetArtifactName)'
-
-    - task: ArchiveFiles@2
-      displayName: 'Archive Binary Files'
-      inputs:
-        rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/$(NuGetArtifactName)'
-        includeRootFolder: false
-        archiveFile: '$(Build.ArtifactStagingDirectory)/$(ReleaseArtifactName)/Apache-Lucene.Net-$(PackageVersion).bin.zip'
-
-    - pwsh: |
-        $dir = '$(Build.ArtifactStagingDirectory)/$(ReleaseArtifactName)'
-        if (!(Test-Path $dir)) { New-Item -ItemType Directory -Path "$dir" -Force }
-        $nl = [Environment]::NewLine
-        "TODO: Review: http://www.apache.org/legal/release-policy.html" + $nl + `
-        "TODO: Tag Repository" + $nl + `
-        "  commit: $(Build.SourceVersion)" + $nl + `
-        "  tag: $(VCSLabel)" + $nl + `
-        "TODO: Sign release artifacts (see https://www.apache.org/dev/release-signing.html)" + $nl + `
-        "TODO: Push release artifacts to dev (https://dist.apache.org/repos/dist/dev/lucenenet/)" + $nl + `
-        "TODO: Start release [VOTE] (see https://www.apache.org/foundation/voting.html)" + $nl | Out-File -FilePath "$dir/RELEASE-TODO.txt" -Force
-      displayName: 'Write RELEASE-TODO.txt'
-
-    - task: PublishPipelineArtifact@1
-      displayName: 'Publish Artifact: $(ReleaseArtifactName)'
-      inputs:
-        targetPath: '$(Build.ArtifactStagingDirectory)/$(ReleaseArtifactName)'
-        artifact:  '$(ReleaseArtifactName)'
-        publishLocation: 'pipeline'
+  # NOTE: Windows x86 (another observed failing arch) is intentionally NOT in this first pass. Running
+  # the test host as x86 on .NET 8+ requires a separate x86 SDK install + multi-level lookup (see the
+  # x86 hack in run-tests-on-os.yml). If x64/Linux do not reproduce, add an x86 job that first installs
+  # the x86 SDK and passes RunConfiguration.TargetPlatform=x86.

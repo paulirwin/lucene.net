@@ -1,0 +1,141 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Steps for the focused #1322 repro: build only the _I-J shard for one framework, then run
+# TestCommitThreadSafety in a repeat loop with diagnostics, capturing every iteration's output.
+# (issue/1322-repro branch only - DO NOT MERGE)
+
+parameters:
+  framework: ''   # e.g. net10.0, net9.0, net8.0, net48, net472
+  platform: 'x64' # x64 or x86
+
+steps:
+# Install the .NET SDKs needed. net10 SDK can build/run all the .NET (Core) TFMs; .NET Framework
+# (net48/net472) needs the Windows-only reference assemblies (present on windows-latest images).
+- task: UseDotNet@2
+  displayName: 'Use .NET SDK 8'
+  inputs:
+    packageType: 'sdk'
+    version: '$(DotNetSDK8Version)'
+
+- task: UseDotNet@2
+  displayName: 'Use .NET SDK 9'
+  inputs:
+    packageType: 'sdk'
+    version: '$(DotNetSDK9Version)'
+
+- task: UseDotNet@2
+  displayName: 'Use .NET SDK 10'
+  inputs:
+    packageType: 'sdk'
+    version: '$(DotNetSDKVersion)'
+
+- pwsh: |
+    dotnet --info
+    Write-Host "Framework under test: ${{ parameters.framework }}  platform: ${{ parameters.platform }}"
+    Write-Host "Logical processor count: $([System.Environment]::ProcessorCount)"
+  displayName: 'Environment info'
+
+# Write lucene.testsettings.json next to the repo root so the test framework picks it up.
+# slow=true and directory=random match the CI configuration under which #1322 was captured.
+- pwsh: |
+    $fileText = @"
+    {
+      "assert": "true",
+      "tests": {
+        "nightly": "false",
+        "weekly": "false",
+        "slow": "true",
+        "awaitsfix": "false",
+        "codec": "random",
+        "docvaluesformat": "random",
+        "postingsformat": "random",
+        "directory": "random",
+        "verbose": "false",
+        "multiplier": "1",
+        "failontestfixtureonetimesetuperror": "true"
+      }
+    }
+    "@
+    $path = Join-Path "$(System.DefaultWorkingDirectory)" "lucene.testsettings.json"
+    Out-File -FilePath $path -Encoding UTF8 -InputObject $fileText
+    Write-Host "Wrote $path"
+    Get-Content $path
+  displayName: 'Write lucene.testsettings.json'
+
+- pwsh: |
+    dotnet build "$(TestProject)" --framework "${{ parameters.framework }}" -c Release -p:TestFrameworks=true
+  displayName: 'Build _I-J shard (${{ parameters.framework }})'
+
+# Repeat loop: run ONLY TestCommitThreadSafety, RepeatCount times. continueOnError so the whole
+# campaign completes and we count failures. Each iteration writes its own TRX. Tracing is on so a
+# failing iteration's console output shows the exact retry sequence in FindSegmentsFile.Run.
+- pwsh: |
+    $ErrorActionPreference = 'Continue'
+    $env:LUCENENET_1322_TRACE = '1'
+    $repeat = [int]'$(RepeatCount)'
+    $resultsDir = Join-Path "$(Build.ArtifactStagingDirectory)" "results-${{ parameters.framework }}-${{ parameters.platform }}"
+    New-Item -ItemType Directory -Path $resultsDir -Force | Out-Null
+    $failures = 0
+    for ($i = 1; $i -le $repeat; $i++) {
+        $trx = "iter_$i.trx"
+        $log = Join-Path $resultsDir "iter_$i.log"
+        dotnet test "$(TestProject)" `
+            --framework "${{ parameters.framework }}" `
+            -c Release --no-build `
+            --filter "$(TestFilter)" `
+            --blame --blame-hang --blame-hang-dump-type mini --blame-hang-timeout 10minutes `
+            --logger "console;verbosity=normal" `
+            --logger "trx;LogFileName=$trx" `
+            --results-directory $resultsDir 2>&1 | Tee-Object -FilePath $log
+        $rc = $LASTEXITCODE
+        if ($rc -ne 0) {
+            $failures++
+            Write-Host "##[warning]Iteration $i FAILED (exit=$rc) on ${{ parameters.framework }}/${{ parameters.platform }}"
+            # Echo any #1322 trace lines from this iteration to the job log for quick scanning.
+            Select-String -Path $log -Pattern '\[1322 ' | ForEach-Object { Write-Host "##[error]$($_.Line)" }
+        } else {
+            # Keep logs small: only retain logs for failing iterations.
+            Remove-Item $log -ErrorAction SilentlyContinue
+        }
+    }
+    Write-Host "=============================================================="
+    Write-Host "SUMMARY ${{ parameters.framework }}/${{ parameters.platform }}: $failures / $repeat iterations FAILED"
+    Write-Host "=============================================================="
+    # Surface a clear pass/fail on the step itself without aborting the campaign mid-run.
+    if ($failures -gt 0) {
+        Write-Host "##vso[task.logissue type=warning;]#1322 reproduced: $failures/$repeat failed on ${{ parameters.framework }}/${{ parameters.platform }}"
+    }
+  displayName: 'Run TestCommitThreadSafety x$(RepeatCount) (${{ parameters.framework }}/${{ parameters.platform }})'
+  continueOnError: true
+
+# Publish all TRX results so the failure rate is visible in the ADO test tab.
+- task: PublishTestResults@2
+  displayName: 'Publish Test Results (${{ parameters.framework }}/${{ parameters.platform }})'
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFormat: 'VSTest'
+    testResultsFiles: '$(Build.ArtifactStagingDirectory)/results-${{ parameters.framework }}-${{ parameters.platform }}/**/*.trx'
+    testRunTitle: '#1322 ${{ parameters.framework }} ${{ parameters.platform }}'
+    mergeTestResults: true
+    failTaskOnFailedTests: false
+
+# Publish the captured logs (failing iterations only) + any hang dumps as an artifact for analysis.
+- task: PublishPipelineArtifact@1
+  displayName: 'Publish repro logs (${{ parameters.framework }}/${{ parameters.platform }})'
+  condition: succeededOrFailed()
+  inputs:
+    targetPath: '$(Build.ArtifactStagingDirectory)/results-${{ parameters.framework }}-${{ parameters.platform }}'
+    artifactName: 'repro-${{ parameters.framework }}-${{ parameters.platform }}'
