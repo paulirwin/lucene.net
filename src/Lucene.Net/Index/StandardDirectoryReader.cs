@@ -250,6 +250,10 @@ namespace Lucene.Net.Index
                 }
                 catch (Exception ex) when (ex.IsThrowable())
                 {
+                    if (SegmentInfos.TRACE_1322)
+                    {
+                        SegmentInfos.Trace1322Public($"StandardDirectoryReader.Open(no-writer): caught while building reader for segment '{infos[i].Info.Name}' (i={i}): {ex.GetType().Name}: {ex.Message}");
+                    }
                     prior = ex;
                 }
                 finally
@@ -277,6 +281,10 @@ namespace Lucene.Net.Index
                                 }
                                 catch (Exception t) when (t.IsThrowable())
                                 {
+                                    if (SegmentInfos.TRACE_1322)
+                                    {
+                                        SegmentInfos.Trace1322Public($"StandardDirectoryReader.Open(no-writer): dispose-in-finally threw {t.GetType().Name}: {t.Message} (i={i}); priorWasNull={prior is null}");
+                                    }
                                     if (prior is null)
                                     {
                                         prior = t;
@@ -288,7 +296,7 @@ namespace Lucene.Net.Index
                     // throw the first exception
                     if (prior != null && SegmentInfos.TRACE_1322)
                     {
-                        SegmentInfos.Trace1322Public($"StandardDirectoryReader.Open: ReThrow prior {prior.GetType().Name}: {prior.Message} (segment index i={i}, success={success})");
+                        SegmentInfos.Trace1322Public($"StandardDirectoryReader.Open(no-writer): finally ReThrow prior {prior.GetType().Name}: {prior.Message} (success={success})");
                     }
                     IOUtils.ReThrow(prior);
                 }
@@ -420,7 +428,20 @@ namespace Lucene.Net.Index
             {
                 SegmentInfos infos = new SegmentInfos();
                 infos.Read(outerInstance.m_directory, segmentFileName);
-                return outerInstance.DoOpenIfChanged(infos);
+                // LUCENENET TEMP (#1322): bracket the reader-construction step (DoOpenIfChanged -> Open) so we
+                // can see whether _X.cfe is thrown HERE (inside DoBody, so the retry loop SHOULD catch it) vs
+                // somewhere the loop never sees. The infos.Read above is what throws EndOfStream on segments_N.
+                if (!SegmentInfos.TRACE_1322) return outerInstance.DoOpenIfChanged(infos);
+                try
+                {
+                    object r = outerInstance.DoOpenIfChanged(infos);
+                    return r;
+                }
+                catch (Exception e)
+                {
+                    SegmentInfos.Trace1322Public($"DoBody.DoOpenIfChanged (build readers) threw for {segmentFileName}: {e.GetType().Name}: {e.Message}");
+                    throw;
+                }
             }
         }
 
