@@ -426,20 +426,28 @@ namespace Lucene.Net.Index
 
             protected internal override object DoBody(string segmentFileName)
             {
-                SegmentInfos infos = new SegmentInfos();
-                infos.Read(outerInstance.m_directory, segmentFileName);
-                // LUCENENET TEMP (#1322): bracket the reader-construction step (DoOpenIfChanged -> Open) so we
-                // can see whether _X.cfe is thrown HERE (inside DoBody, so the retry loop SHOULD catch it) vs
-                // somewhere the loop never sees. The infos.Read above is what throws EndOfStream on segments_N.
-                if (!SegmentInfos.TRACE_1322) return outerInstance.DoOpenIfChanged(infos);
+                // LUCENENET TEMP (#1322): wrap the WHOLE body (infos.Read + DoOpenIfChanged) so NO throw from
+                // this DoBody can leave unlogged. The earlier wrapper only covered DoOpenIfChanged; infos.Read
+                // (line that throws EndOfStream on a torn segments_N) was OUTSIDE it. If a build .cfs escapes the
+                // retry loop with no DoBody trace, this entry/exception log pins whether DoBody was even on the
+                // stack for it, and confirms the TRACE_1322 (traced) path was taken rather than the fast-path.
+                if (!SegmentInfos.TRACE_1322)
+                {
+                    SegmentInfos infosFast = new SegmentInfos();
+                    infosFast.Read(outerInstance.m_directory, segmentFileName);
+                    return outerInstance.DoOpenIfChanged(infosFast);
+                }
+                SegmentInfos.Trace1322Public($"DoBody2 ENTER for {segmentFileName} (TRACE path)");
                 try
                 {
+                    SegmentInfos infos = new SegmentInfos();
+                    infos.Read(outerInstance.m_directory, segmentFileName);
                     object r = outerInstance.DoOpenIfChanged(infos);
                     return r;
                 }
                 catch (Exception e)
                 {
-                    SegmentInfos.Trace1322Public($"DoBody.DoOpenIfChanged (build readers) threw for {segmentFileName}: {e.GetType().Name}: {e.Message}");
+                    SegmentInfos.Trace1322Public($"DoBody2 THREW for {segmentFileName}: {e.GetType().Name}: {e.Message}");
                     throw;
                 }
             }

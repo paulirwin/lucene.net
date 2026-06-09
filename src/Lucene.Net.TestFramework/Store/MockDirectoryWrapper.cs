@@ -94,6 +94,20 @@ namespace Lucene.Net.Store
     /// </summary>
     public class MockDirectoryWrapper : BaseDirectoryWrapper
     {
+        // LUCENENET TEMP (#1322 repro, DO NOT MERGE): global monotonic sequence + trace so we can reconstruct
+        // the EXACT interleaving of the three operations around the retry window on RAMDirectory:
+        //   (1) writer DeleteFile(_X.<ext>)  (2) writer CreateOutput(segments_N) [publish new gen]
+        //   (3) reader OpenInput(segments_N)/ListAll [resolve gen]  and the failing OpenInput of a missing file.
+        // Off by default (LUCENENET_1322_TRACE != 1) so zero cost outside the repro.
+        internal static readonly bool TRACE_1322 =
+            Environment.GetEnvironmentVariable("LUCENENET_1322_TRACE") == "1";
+        private static long traceSeq;
+        private static void Trace1322(string op, string name)
+        {
+            long s = System.Threading.Interlocked.Increment(ref traceSeq);
+            Console.Error.WriteLine($"[1322seq {s} t{Environment.CurrentManagedThreadId} {J2N.Time.NanoTime() / 1000}us] {op} {name}");
+        }
+
         internal long maxSize;
 
         // Max actual bytes used. this is set by MockRAMOutputStream:
@@ -526,6 +540,7 @@ namespace Lucene.Net.Store
             try
             {
                 MaybeYield();
+                if (TRACE_1322) Trace1322("DELETE", name);
                 DeleteFile(name, false);
             }
             finally
@@ -660,6 +675,7 @@ namespace Lucene.Net.Store
                 {
                     throw new IOException("cannot createOutput after crash");
                 }
+                if (TRACE_1322) Trace1322("CREATE", name);
                 Init();
                 UninterruptableMonitor.Enter(this);
                 try
@@ -799,8 +815,10 @@ namespace Lucene.Net.Store
                 }
                 if (!LuceneTestCase.SlowFileExists(m_input, name))
                 {
+                    if (TRACE_1322) Trace1322("OPEN-MISSING", name);
                     throw randomState.NextBoolean() ? (IOException)new FileNotFoundException(name + " in dir=" + m_input) : new DirectoryNotFoundException(name + " in dir=" + m_input);
                 }
+                if (TRACE_1322 && name.StartsWith("segments", StringComparison.Ordinal)) Trace1322("OPEN-OK", name);
 
                 // cannot open a file for input if it's still open for
                 // output, except for segments.gen and segments_N

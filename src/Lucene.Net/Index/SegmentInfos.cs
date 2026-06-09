@@ -1226,6 +1226,7 @@ namespace Lucene.Net.Index
                             Message("primary Exception on '" + segmentFileName + "': " + err + "'; will retry: retryCount=" + retryCount + "; gen = " + gen);
                         }
 
+                        if (TRACE_1322) Trace1322($"FALLBACK-CHECK gen={gen} useFirstMethod={useFirstMethod} retryCount={retryCount} -> enter={(gen > 1 && useFirstMethod && retryCount == 1)}");
                         if (gen > 1 && useFirstMethod && retryCount == 1)
                         {
                             // this is our second time trying this same segments
@@ -1247,27 +1248,53 @@ namespace Lucene.Net.Index
                                 prevExists = false;
                             }
 
+                            if (TRACE_1322) Trace1322($"FALLBACK prevSegmentFileName={prevSegmentFileName} prevExists={prevExists}");
                             if (prevExists)
                             {
                                 if (infoStream != null)
                                 {
                                     Message("fallback to prior segment file '" + prevSegmentFileName + "'");
                                 }
-                                try
+                                // LUCENENET TEMP (#1322): catch-all wrapper around the fallback DoBody so that if it
+                                // throws something the `when (... && err2.IsIOException())` filter does NOT match, we
+                                // still see it before it escapes (the filter swallows; a non-match would propagate
+                                // UNLOGGED today). This is the prime suspect for the silent escape.
+                                if (TRACE_1322)
                                 {
-                                    object v = DoBody(prevSegmentFileName);
-                                    if (infoStream != null)
+                                    try
                                     {
-                                        Message("success on fallback " + prevSegmentFileName);
+                                        object vTrace = DoBody(prevSegmentFileName);
+                                        Trace1322($"FALLBACK success on {prevSegmentFileName}");
+                                        return vTrace;
                                     }
-                                    if (TRACE_1322) Trace1322($"FALLBACK success on {prevSegmentFileName}");
-                                    return v;
-                                }
-                                catch (Exception err2) when (TraceDoBodyThrow(err2, "FALLBACK:" + prevSegmentFileName, gen, lastGen, retryCount, useFirstMethod, genLookaheadCount) && err2.IsIOException())
-                                {
-                                    if (infoStream != null)
+                                    catch (Exception errF)
                                     {
-                                        Message("secondary Exception on '" + prevSegmentFileName + "': " + err2 + "'; will retry");
+                                        Trace1322($"FALLBACK DoBody threw {errF.GetType().Name} (IsIOException={errF.IsIOException()}): {errF.Message} on {prevSegmentFileName}");
+                                        if (!errF.IsIOException())
+                                        {
+                                            Trace1322($"FALLBACK NON-IO ESCAPE: rethrowing {errF.GetType().Name} past the loop");
+                                            throw;
+                                        }
+                                        // IO: behave as before (swallow, continue retrying)
+                                    }
+                                }
+                                else
+                                {
+                                    try
+                                    {
+                                        object v = DoBody(prevSegmentFileName);
+                                        if (infoStream != null)
+                                        {
+                                            Message("success on fallback " + prevSegmentFileName);
+                                        }
+                                        return v;
+                                    }
+                                    catch (Exception err2) when (err2.IsIOException())
+                                    {
+                                        if (infoStream != null)
+                                        {
+                                            Message("secondary Exception on '" + prevSegmentFileName + "': " + err2 + "'; will retry");
+                                        }
                                     }
                                 }
                             }
