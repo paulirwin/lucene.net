@@ -89,10 +89,13 @@ steps:
     $ErrorActionPreference = 'Continue'
     $env:LUCENENET_1322_TRACE = '1'
     $repeat = [int]'$(RepeatCount)'
+    $maxFailures = [int]'$(MaxFailures)'
     $resultsDir = Join-Path "$(Build.ArtifactStagingDirectory)" "results-${{ parameters.osName }}-${{ parameters.framework }}-${{ parameters.platform }}"
     New-Item -ItemType Directory -Path $resultsDir -Force | Out-Null
     $failures = 0
+    $ran = 0
     for ($i = 1; $i -le $repeat; $i++) {
+        $ran = $i
         $trx = "iter_$i.trx"
         $log = Join-Path $resultsDir "iter_$i.log"
         dotnet test "$(TestProject)" `
@@ -106,19 +109,24 @@ steps:
         $rc = $LASTEXITCODE
         if ($rc -ne 0) {
             $failures++
-            Write-Host "##[warning]Iteration $i FAILED (exit=$rc) on ${{ parameters.osName }}/${{ parameters.framework }}/${{ parameters.platform }}"
+            Write-Host "##[warning]Iteration $i FAILED (exit=$rc) on ${{ parameters.osName }}/${{ parameters.framework }}/${{ parameters.platform }} ($failures/$maxFailures)"
             # Echo any #1322 trace lines from this iteration to the job log for quick scanning.
             Select-String -Path $log -Pattern '\[1322 ' | ForEach-Object { Write-Host "##[error]$($_.Line)" }
+            # Stop early once we have enough signal - no need to burn the rest of the budget.
+            if ($failures -ge $maxFailures) {
+                Write-Host "##[warning]Reached MaxFailures=$maxFailures after $i iterations; stopping early."
+                break
+            }
         } else {
             # Keep logs small: only retain logs for failing iterations.
             Remove-Item $log -ErrorAction SilentlyContinue
         }
     }
     Write-Host "=============================================================="
-    Write-Host "SUMMARY ${{ parameters.osName }}/${{ parameters.framework }}/${{ parameters.platform }}: $failures / $repeat iterations FAILED"
+    Write-Host "SUMMARY ${{ parameters.osName }}/${{ parameters.framework }}/${{ parameters.platform }}: $failures FAILED in $ran iterations (stopped early at MaxFailures=$maxFailures)"
     Write-Host "=============================================================="
     if ($failures -gt 0) {
-        Write-Host "##vso[task.logissue type=error;]#1322 reproduced: $failures/$repeat failed on ${{ parameters.osName }}/${{ parameters.framework }}/${{ parameters.platform }}"
+        Write-Host "##vso[task.logissue type=error;]#1322 reproduced: $failures failed in $ran iterations on ${{ parameters.osName }}/${{ parameters.framework }}/${{ parameters.platform }}"
         # Fail the run so a reproduction is unmissable. Publish steps below still run (succeededOrFailed).
         exit 1
     }

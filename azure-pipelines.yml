@@ -41,9 +41,12 @@ variables:
   value: 'src/Lucene.Net.Tests._I-J/Lucene.Net.Tests._I-J.csproj'
 - name: TestFilter
   value: 'FullyQualifiedName~Lucene.Net.Index.TestIndexWriterCommit.TestCommitThreadSafety'
-# Number of times to run the test per framework, per job. Override at queue time.
+# Number of times to run the test per job. Override at queue time.
 - name: RepeatCount
   value: '200'
+# Stop a job early once this many iterations have failed (we have enough signal by then).
+- name: MaxFailures
+  value: '3'
 
 stages:
 - stage: Repro_Stage
@@ -51,53 +54,20 @@ stages:
   jobs:
 
   # ---------------------------------------------------------------------------------------------------
-  # Linux x64 - net10.0, net9.0, net8.0
+  # Linux x64, net10.0 ONLY. Confirmed: net8.0/net9.0 are clean, and the failure occurs on both Linux
+  # and Windows (NOT OS-related), so we focus all compute on the single fastest reproducing target.
+  # (Re-add Windows / other frameworks from git history if a comparison is ever needed again.)
   # ---------------------------------------------------------------------------------------------------
-  - job: Linux_x64
-    displayName: 'Linux x64'
+  - job: Linux_x64_net10
+    displayName: 'Linux x64 net10.0'
     pool:
       vmImage: 'ubuntu-latest'
     timeoutInMinutes: 120
-    strategy:
-      matrix:
-        net10_0:
-          framework: 'net10.0'
-        net9_0:
-          framework: 'net9.0'
-        net8_0:
-          framework: 'net8.0'
     steps:
     - template: '.build/azure-templates/repro-1322-steps.yml'
       parameters:
         osName: 'Linux'
-        framework: '$(framework)'
-        platform: 'x64'
-
-  # ---------------------------------------------------------------------------------------------------
-  # Windows x64 - net10.0, net9.0, net8.0, net48, net472
-  # ---------------------------------------------------------------------------------------------------
-  - job: Windows_x64
-    displayName: 'Windows x64'
-    pool:
-      vmImage: 'windows-latest'
-    timeoutInMinutes: 120
-    strategy:
-      matrix:
-        net10_0:
-          framework: 'net10.0'
-        net9_0:
-          framework: 'net9.0'
-        net8_0:
-          framework: 'net8.0'
-        net48:
-          framework: 'net48'
-        net472:
-          framework: 'net472'
-    steps:
-    - template: '.build/azure-templates/repro-1322-steps.yml'
-      parameters:
-        osName: 'Windows'
-        framework: '$(framework)'
+        framework: 'net10.0'
         platform: 'x64'
 
   # NOTE: Windows x86 (another observed failing arch) is intentionally NOT in this first pass. Running

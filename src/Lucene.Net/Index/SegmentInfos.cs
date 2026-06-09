@@ -916,6 +916,19 @@ namespace Lucene.Net.Index
             Console.Error.WriteLine($"[1322 t{Environment.CurrentManagedThreadId} {J2N.Time.NanoTime() / 1000000}ms] {message}");
         }
 
+        // LUCENENET TEMP (#1322): logs EVERY exception DoBody throws (the when-filter is evaluated for all of
+        // them, even ones it will not catch), including whether IsIOException() is true. If an exception with
+        // IsIOException()==false flies past here, it escapes the retry loop unrecovered - that is the bug.
+        // Always returns true so the real filter (&& err.IsIOException()) still decides whether to catch.
+        private static bool TraceDoBodyThrow(Exception err, string segmentFileName, long gen, long lastGen, int retryCount, bool useFirstMethod, int genLookaheadCount)
+        {
+            if (TRACE_1322)
+            {
+                Trace1322($"DoBody FAILED on {segmentFileName}: {err.GetType().Name} (IsIOException={err.IsIOException()}): {err.Message} (gen={gen} lastGen={lastGen} retryCount={retryCount} useFirstMethod={useFirstMethod} genLookahead={genLookaheadCount})");
+            }
+            return true;
+        }
+
         /// <summary>
         /// Gets or Sets the <see cref="defaultGenLookaheadCount"/>.
         /// <para/>
@@ -1197,9 +1210,8 @@ namespace Lucene.Net.Index
                         if (TRACE_1322 && exc != null) Trace1322($"RECOVERED: DoBody success on {segmentFileName} (gen={gen} retryCount={retryCount} useFirstMethod={useFirstMethod} genLookahead={genLookaheadCount}) after earlier {exc.GetType().Name}");
                         return v;
                     }
-                    catch (Exception err) when (err.IsIOException())
+                    catch (Exception err) when (TraceDoBodyThrow(err, segmentFileName, gen, lastGen, retryCount, useFirstMethod, genLookaheadCount) && err.IsIOException())
                     {
-                        if (TRACE_1322) Trace1322($"DoBody FAILED on {segmentFileName}: {err.GetType().Name}: {err.Message} (gen={gen} lastGen={lastGen} retryCount={retryCount} useFirstMethod={useFirstMethod} genLookahead={genLookaheadCount})");
                         // Save the original root cause:
                         if (exc is null)
                         {
@@ -1245,9 +1257,10 @@ namespace Lucene.Net.Index
                                     {
                                         Message("success on fallback " + prevSegmentFileName);
                                     }
+                                    if (TRACE_1322) Trace1322($"FALLBACK success on {prevSegmentFileName}");
                                     return v;
                                 }
-                                catch (Exception err2) when (err2.IsIOException())
+                                catch (Exception err2) when (TraceDoBodyThrow(err2, "FALLBACK:" + prevSegmentFileName, gen, lastGen, retryCount, useFirstMethod, genLookaheadCount) && err2.IsIOException())
                                 {
                                     if (infoStream != null)
                                     {
