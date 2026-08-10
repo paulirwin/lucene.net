@@ -221,7 +221,9 @@ namespace Opennlp.Tools.Util
                 throw new ArgumentException("The span " + ToString() + " is outside the given text which has length " + text.Length + "!");
             }
 
-            return text.Subsequence(GetStart(), GetEnd());
+            // LUCENENET: Subsequence takes (startIndex, length) here, whereas Java's
+            // subSequence takes (begin, end).
+            return text.Subsequence(GetStart(), GetEnd() - GetStart());
         }
 
         /// <summary>
@@ -307,7 +309,7 @@ namespace Opennlp.Tools.Util
         /// <summary>
         /// Generates a hash code of the current span.
         /// </summary>
-        public virtual int GetHashCode()
+        public override int GetHashCode()
         {
             return HashCode.Combine(GetStart(), GetEnd(), GetType());
         }
@@ -315,7 +317,7 @@ namespace Opennlp.Tools.Util
         /// <summary>
         /// Checks if the specified span is equal to the current span.
         /// </summary>
-        public virtual bool Equals(object o)
+        public override bool Equals(object o)
         {
             if (o == this)
             {
@@ -334,7 +336,7 @@ namespace Opennlp.Tools.Util
         /// <summary>
         /// Generates a human readable string.
         /// </summary>
-        public virtual string ToString()
+        public override string ToString()
         {
             StringBuilder toStringBuffer = new StringBuilder(15);
             toStringBuffer.Append("[");
@@ -380,7 +382,7 @@ namespace Opennlp.Tools.Util
                     cb.Append(tokens[ti]).Append(" ");
                 }
 
-                chunks[si] = cb.Subsequence(0, cb.Length - 1).ToString();
+                chunks[si] = cb.ToString(0, cb.Length - 1);
             }
 
             return chunks;

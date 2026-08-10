@@ -20,7 +20,7 @@ namespace Opennlp.Tools.Ml.Model
     /// <summary>
     /// Interface for maximum entropy models.
     /// </summary>
-    public interface MaxentModel
+    internal interface MaxentModel
     {
         /// <summary>
         /// Evaluates a context.

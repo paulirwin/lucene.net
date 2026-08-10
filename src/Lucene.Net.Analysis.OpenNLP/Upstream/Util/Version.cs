@@ -35,9 +35,13 @@ namespace Opennlp.Tools.Util
     /// </summary>
     public class Version
     {
-        private static readonly string DEV_VERSION_STRING = "0.0.0-SNAPSHOT";
+        // LUCENENET: these are const rather than static readonly because Java treats
+        // "static final" String constants as compile-time constants. As static readonly
+        // fields they would initialize in declaration order, and DEV_VERSION (which
+        // calls Parse, which reads SNAPSHOT_MARKER) would observe SNAPSHOT_MARKER as null.
+        private const string DEV_VERSION_STRING = "0.0.0-SNAPSHOT";
+        private const string SNAPSHOT_MARKER = "-SNAPSHOT";
         public static readonly Version DEV_VERSION = Version.Parse(DEV_VERSION_STRING);
-        private static readonly string SNAPSHOT_MARKER = "-SNAPSHOT";
         private readonly int major;
         private readonly int minor;
         private readonly int revision;
@@ -108,17 +112,17 @@ namespace Opennlp.Tools.Util
         /// of {@link Version} with the returned version value string.
         /// </summary>
         /// <returns>the version value string</returns>
-        public virtual string ToString()
+        public override string ToString()
         {
             return GetMajor() + "." + GetMinor() + "." + GetRevision() + (IsSnapshot() ? SNAPSHOT_MARKER : "");
         }
 
-        public virtual int GetHashCode()
+        public override int GetHashCode()
         {
             return HashCode.Combine(GetMajor(), GetMinor(), GetRevision(), IsSnapshot());
         }
 
-        public virtual bool Equals(object obj)
+        public override bool Equals(object obj)
         {
             if (obj == this)
             {
@@ -162,8 +166,10 @@ namespace Opennlp.Tools.Util
                 versionEnd = indexFirstDash;
             }
 
-            bool snapshot = version.EndsWith(SNAPSHOT_MARKER);
-            return new Version(int.Parse(version.Substring(0, indexFirstDot)), int.Parse(version.Substring(indexFirstDot + 1, indexSecondDot)), int.Parse(version.Substring(indexSecondDot + 1, versionEnd)), snapshot);
+            bool snapshot = version.EndsWith(SNAPSHOT_MARKER, StringComparison.Ordinal);
+            // LUCENENET: Java's substring(begin, end) takes an end index, while .NET's
+            // Substring(start, length) takes a length, so the lengths are computed here.
+            return new Version(int.Parse(version.Substring(0, indexFirstDot)), int.Parse(version.Substring(indexFirstDot + 1, indexSecondDot - (indexFirstDot + 1))), int.Parse(version.Substring(indexSecondDot + 1, versionEnd - (indexSecondDot + 1))), snapshot);
         }
 
         /// <summary>

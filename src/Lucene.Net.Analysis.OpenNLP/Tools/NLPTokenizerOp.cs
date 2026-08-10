@@ -1,5 +1,6 @@
 // Lucene version compatibility level 8.2.0
 using Lucene.Net.Support.Threading;
+using Opennlp.Tools.Tokenize;
 using Span = Opennlp.Tools.Util.Span;
 
 namespace Lucene.Net.Analysis.OpenNlp.Tools
@@ -50,7 +51,7 @@ namespace Lucene.Net.Analysis.OpenNlp.Tools
                     span1[0] = new Span(0, sentence.Length);
                     return span1;
                 }
-                return tokenizer.tokenizePos(sentence);
+                return tokenizer.TokenizePos(sentence);
             }
             finally
             {

@@ -26,22 +26,28 @@ namespace Opennlp.Tools.Dictionary
     /// <summary>
     /// This class is a dictionary.
     /// </summary>
-    public class Dictionary : IEnumerable<StringList> //, SerializableArtifact
+    internal class Dictionary : IEnumerable<StringList> //, SerializableArtifact
     {
         private class StringListWrapper
         {
             private readonly StringList stringList;
-            private StringListWrapper(StringList stringList)
+            // LUCENENET: upstream is a Java non-static inner class that reads the
+            // outer Dictionary's isCaseSensitive field directly. C# inner classes
+            // have no implicit outer reference, so the flag is passed in instead.
+            private readonly bool isCaseSensitive;
+
+            internal StringListWrapper(StringList stringList, bool isCaseSensitive)
             {
                 this.stringList = stringList;
+                this.isCaseSensitive = isCaseSensitive;
             }
 
-            private StringList GetStringList()
+            internal StringList GetStringList()
             {
                 return stringList;
             }
 
-            public virtual bool Equals(object obj)
+            public override bool Equals(object obj)
             {
                 bool result;
                 if (obj == this)
@@ -68,20 +74,20 @@ namespace Opennlp.Tools.Dictionary
                 return result;
             }
 
-            public virtual int GetHashCode()
+            public override int GetHashCode()
             {
 
                 // if lookup is too slow optimize this
                 return StringUtil.ToLowerCase(this.stringList.ToString()).GetHashCode();
             }
 
-            public virtual string ToString()
+            public override string ToString()
             {
                 return this.stringList.ToString();
             }
         }
 
-        private HashSet<StringListWrapper> entrySet = new HashSet();
+        private HashSet<StringListWrapper> entrySet = new HashSet<StringListWrapper>();
         private readonly bool isCaseSensitive;
         private int minTokenCount = 99999;
         private int maxTokenCount = 0;
@@ -112,7 +118,7 @@ namespace Opennlp.Tools.Dictionary
         /// <param name="tokens">the new entry</param>
         public virtual void Put(StringList tokens)
         {
-            entrySet.Add(new StringListWrapper(tokens));
+            entrySet.Add(new StringListWrapper(tokens, isCaseSensitive));
             minTokenCount = Math.Min(minTokenCount, tokens.Count);
             maxTokenCount = Math.Max(maxTokenCount, tokens.Count);
         }
@@ -140,7 +146,7 @@ namespace Opennlp.Tools.Dictionary
         /// <returns>true if it contains the entry otherwise false</returns>
         public virtual bool Contains(StringList tokens)
         {
-            return entrySet.Contains(new StringListWrapper(tokens));
+            return entrySet.Contains(new StringListWrapper(tokens, isCaseSensitive));
         }
 
         /// <summary>
@@ -149,42 +155,24 @@ namespace Opennlp.Tools.Dictionary
         /// <param name="tokens">filter tokens</param>
         public virtual void Remove(StringList tokens)
         {
-            entrySet.Remove(new StringListWrapper(tokens));
+            entrySet.Remove(new StringListWrapper(tokens, isCaseSensitive));
         }
 
         /// <summary>
         /// Retrieves an Iterator over all tokens.
         /// </summary>
         /// <returns>token-{@link Iterator}</returns>
-        public virtual IEnumerator<StringList> Iterator()
+        public virtual IEnumerator<StringList> GetEnumerator()
         {
-            IEnumerator<StringListWrapper> entries = entrySet.GetEnumerator();
-            return new AnonymousIEnumerator(this);
+            // LUCENENET: upstream returns an anonymous Iterator; a C# iterator
+            // block expresses the same traversal.
+            foreach (StringListWrapper entry in entrySet)
+            {
+                yield return entry.GetStringList();
+            }
         }
 
-        private sealed class AnonymousIEnumerator : IEnumerator
-        {
-            public AnonymousIEnumerator(StringListWrapper parent)
-            {
-                this.parent = parent;
-            }
-
-            private readonly StringListWrapper parent;
-            public bool HasNext()
-            {
-                return entries.HasNext();
-            }
-
-            public StringList Next()
-            {
-                return entries.Next().GetStringList();
-            }
-
-            public void Remove()
-            {
-                entries.Remove();
-            }
-        }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
         /// <summary>
         /// Retrieves the number of tokens in the current instance.
@@ -232,7 +220,7 @@ namespace Opennlp.Tools.Dictionary
         //    }
         //}
 
-        public virtual bool Equals(object obj)
+        public override bool Equals(object obj)
         {
             bool result;
             if (obj == this)
@@ -252,12 +240,12 @@ namespace Opennlp.Tools.Dictionary
             return result;
         }
 
-        public virtual int GetHashCode()
+        public override int GetHashCode()
         {
             return entrySet.GetHashCode();
         }
 
-        public virtual string ToString()
+        public override string ToString()
         {
             return entrySet.ToString();
         }
@@ -269,23 +257,17 @@ namespace Opennlp.Tools.Dictionary
         /// <param name="in">{@link Reader}</param>
         /// <returns>the parsed dictionary</returns>
         /// <exception cref="IOException"></exception>
-        public static Dictionary ParseOneEntryPerLine(Reader @in)
+        public static Dictionary ParseOneEntryPerLine(TextReader @in)
         {
-            BufferedReader lineReader = new BufferedReader(@in);
+            // LUCENENET: Java's Reader/BufferedReader map to TextReader, and
+            // StringTokenizer to a whitespace split that drops empty entries.
             Dictionary dictionary = new Dictionary();
             string line;
-            while ((line = lineReader.ReadLine()) != null)
+            while ((line = @in.ReadLine()) != null)
             {
-                StringTokenizer whiteSpaceTokenizer = new StringTokenizer(line, " ");
-                string[] tokens = new string[whiteSpaceTokenizer.CountTokens()];
+                string[] tokens = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 if (tokens.Length > 0)
                 {
-                    int tokenIndex = 0;
-                    while (whiteSpaceTokenizer.HasMoreTokens())
-                    {
-                        tokens[tokenIndex++] = whiteSpaceTokenizer.NextToken();
-                    }
-
                     dictionary.Put(new StringList(tokens));
                 }
             }
@@ -301,65 +283,85 @@ namespace Opennlp.Tools.Dictionary
         /// entry will be part of the Set.
         /// </summary>
         /// <returns>a Set containing the entries of this dictionary</returns>
-        public virtual HashSet<string> AsStringSet()
+        public virtual ISet<string> AsStringSet()
         {
-            return new AnonymousAbstractSet(this);
+            // LUCENENET: upstream returns an anonymous AbstractSet that implements
+            // only iterator(), size() and contains(Object). The equivalent here is
+            // a small read-only set view over the same entry set.
+            return new StringSetView(entrySet, isCaseSensitive);
         }
 
-        private sealed class AnonymousIEnumerator2 : IEnumerator
+        private sealed class StringSetView : ISet<string>
         {
-            public AnonymousIEnumerator2(StringListWrapper parent)
+            private readonly ISet<StringListWrapper> entrySet;
+            private readonly bool isCaseSensitive;
+
+            internal StringSetView(ISet<StringListWrapper> entrySet, bool isCaseSensitive)
             {
-                this.parent = parent;
+                this.entrySet = entrySet;
+                this.isCaseSensitive = isCaseSensitive;
             }
 
-            private readonly StringListWrapper parent;
-            public bool HasNext()
+            public IEnumerator<string> GetEnumerator()
             {
-                return entries.HasNext();
-            }
-
-            public string Next()
-            {
-                return entries.Next().GetStringList().GetToken(0);
-            }
-
-            public void Remove()
-            {
-                throw new NotSupportedException();
-            }
-        }
-
-        private sealed class AnonymousAbstractSet : AbstractSet
-        {
-            public AnonymousAbstractSet(StringListWrapper parent)
-            {
-                this.parent = parent;
-            }
-
-            private readonly StringListWrapper parent;
-            public IEnumerator<string> Iterator()
-            {
-                IEnumerator<StringListWrapper> entries = entrySet.Iterator();
-                return new AnonymousIEnumerator2(this);
-            }
-
-            public int Size()
-            {
-                return entrySet.Count;
-            }
-
-            public bool Contains(object obj)
-            {
-                bool result = false;
-                if (obj is string)
+                foreach (StringListWrapper entry in entrySet)
                 {
-                    string str = (string)obj;
-                    result = entrySet.Contains(new StringListWrapper(new StringList(str)));
+                    yield return entry.GetStringList().GetToken(0);
+                }
+            }
+
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
+            public int Count => entrySet.Count;
+
+            public bool Contains(string item)
+            {
+                if (item is null)
+                {
+                    return false;
                 }
 
-                return result;
+                return entrySet.Contains(new StringListWrapper(new StringList(item), isCaseSensitive));
             }
+
+            public bool IsReadOnly => true;
+
+            public void CopyTo(string[] array, int arrayIndex)
+            {
+                foreach (string item in this)
+                {
+                    array[arrayIndex++] = item;
+                }
+            }
+
+            // LUCENENET: the remaining members are not implemented upstream either.
+            void ICollection<string>.Add(string item) => throw new NotSupportedException();
+
+            bool ISet<string>.Add(string item) => throw new NotSupportedException();
+
+            public void Clear() => throw new NotSupportedException();
+
+            public bool Remove(string item) => throw new NotSupportedException();
+
+            public void ExceptWith(IEnumerable<string> other) => throw new NotSupportedException();
+
+            public void IntersectWith(IEnumerable<string> other) => throw new NotSupportedException();
+
+            public void SymmetricExceptWith(IEnumerable<string> other) => throw new NotSupportedException();
+
+            public void UnionWith(IEnumerable<string> other) => throw new NotSupportedException();
+
+            public bool IsProperSubsetOf(IEnumerable<string> other) => throw new NotSupportedException();
+
+            public bool IsProperSupersetOf(IEnumerable<string> other) => throw new NotSupportedException();
+
+            public bool IsSubsetOf(IEnumerable<string> other) => throw new NotSupportedException();
+
+            public bool IsSupersetOf(IEnumerable<string> other) => throw new NotSupportedException();
+
+            public bool Overlaps(IEnumerable<string> other) => throw new NotSupportedException();
+
+            public bool SetEquals(IEnumerable<string> other) => throw new NotSupportedException();
         }
 
         /// <summary>

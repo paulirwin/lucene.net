@@ -22,7 +22,7 @@ namespace Opennlp.Tools.Util.Featuregen
     /// <summary>
     /// This feature generator creates sentence begin and end features.
     /// </summary>
-    public class SentenceFeatureGenerator : AdaptiveFeatureGenerator
+    internal class SentenceFeatureGenerator : AdaptiveFeatureGenerator
     {
         private readonly bool isGenerateFirstWordFeature;
         private readonly bool isGenerateLastWordFeature;
@@ -43,6 +43,17 @@ namespace Opennlp.Tools.Util.Featuregen
             {
                 features.Add("S=end");
             }
+        }
+
+        // LUCENENET: AdaptiveFeatureGenerator declares these as Java 8 default
+        // methods; C# default interface implementations are unavailable on
+        // netstandard2.0/net462, so the empty bodies are supplied here.
+        public virtual void UpdateAdaptiveData(string[] tokens, string[] outcomes)
+        {
+        }
+
+        public virtual void ClearAdaptiveData()
+        {
         }
     }
 }

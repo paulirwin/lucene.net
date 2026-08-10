@@ -1,5 +1,6 @@
 // Lucene version compatibility level 8.2.0
 using Lucene.Net.Support.Threading;
+using Opennlp.Tools.Sentdetect;
 using Span = Opennlp.Tools.Util.Span;
 
 namespace Lucene.Net.Analysis.OpenNlp.Tools
@@ -46,7 +47,7 @@ namespace Lucene.Net.Analysis.OpenNlp.Tools
             {
                 if (sentenceSplitter != null)
                 {
-                    return sentenceSplitter.sentPosDetect(line);
+                    return sentenceSplitter.SentPosDetect(line);
                 }
                 else
                 {

@@ -26,7 +26,7 @@ namespace Opennlp.Tools.Namefind
     /// Class for determining contextual features for a tag/chunk style
     /// named-entity recognizer.
     /// </summary>
-    public class DefaultNameContextGenerator : NameContextGenerator
+    internal class DefaultNameContextGenerator : NameContextGenerator
     {
         protected AdaptiveFeatureGenerator[] featureGenerators;
         private static AdaptiveFeatureGenerator windowFeatures = new CachedFeatureGenerator(new WindowFeatureGenerator(new TokenFeatureGenerator(), 2, 2), new WindowFeatureGenerator(new TokenClassFeatureGenerator(true), 2, 2), new OutcomePriorFeatureGenerator(), new PreviousMapFeatureGenerator(), new BigramNameFeatureGenerator());

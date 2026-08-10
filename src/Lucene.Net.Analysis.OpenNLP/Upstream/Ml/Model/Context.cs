@@ -25,7 +25,7 @@ namespace Opennlp.Tools.Ml.Model
     /// predicate or feature.  This is used to store maxent model parameters as well as model and empirical
     /// expected values.
     /// </summary>
-    public class Context
+    internal class Context
     {
         /// <summary>
         /// The real valued parameters or expected values for this context.

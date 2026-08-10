@@ -27,5 +27,5 @@ namespace Opennlp.Tools.Util.Featuregen
     /// All implementing classes must be thread safe.
     /// </summary>
     /// <param name="resourceIdentifier">the identifier which names the resource.</param>
-    public delegate object FeatureGeneratorResourceProvider(string resourceIdentifier);
+    internal delegate object FeatureGeneratorResourceProvider(string resourceIdentifier);
 }

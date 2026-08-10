@@ -27,7 +27,7 @@ namespace Opennlp.Tools.Chunker
     /// <summary>
     /// Class for holding chunks for a single unit of text.
     /// </summary>
-    public class ChunkSample
+    internal class ChunkSample
     {
         private readonly IList<string> sentence;
         private readonly IList<string> tags;
@@ -120,7 +120,7 @@ namespace Opennlp.Tools.Chunker
             for (int ci = 0, cn = aPreds.Length; ci < cn; ci++)
             {
                 string pred = aPreds[ci];
-                if (pred.StartsWith("B-") || !pred.Equals("I-" + startTag) && !pred.Equals("O"))
+                if (pred.StartsWith("B-", StringComparison.Ordinal) || !pred.Equals("I-" + startTag) && !pred.Equals("O"))
                 {
 
                     // start

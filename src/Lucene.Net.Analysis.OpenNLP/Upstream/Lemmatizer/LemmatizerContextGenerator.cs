@@ -22,7 +22,7 @@ namespace Opennlp.Tools.Lemmatizer
     /// <summary>
     /// Interface for the context generator used for probabilistic lemmatizer.
     /// </summary>
-    public interface LemmatizerContextGenerator : BeamSearchContextGenerator<string>
+    internal interface LemmatizerContextGenerator : BeamSearchContextGenerator<string>
     {
         /// <summary>
         /// Returns the contexts for lemmatizing of the specified index.

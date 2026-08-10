@@ -30,7 +30,7 @@ namespace Opennlp.Tools.Util.Featuregen
     /// generator are typically shared between man instances of features generators
     /// which are called from many threads and have to be thread safe.
     /// </summary>
-    public interface AdaptiveFeatureGenerator
+    internal interface AdaptiveFeatureGenerator
     {
         /// <summary>
         /// Adds the appropriate features for the token at the specified index with the
@@ -47,16 +47,16 @@ namespace Opennlp.Tools.Util.Featuregen
         /// </summary>
         /// <param name="tokens">The tokens of the sentence or other text unit which has been processed.</param>
         /// <param name="outcomes">The outcomes associated with the specified tokens.</param>
-        void UpdateAdaptiveData(string[] tokens, string[] outcomes)
-        {
-        }
+        // LUCENENET: upstream declares this as a Java 8 default method. Default
+        // interface implementations are not supported on netstandard2.0/net462,
+        // so implementors provide the empty body instead.
+        void UpdateAdaptiveData(string[] tokens, string[] outcomes);
 
         /// <summary>
         /// Informs the feature generator that the context of the adaptive data (typically a document)
         /// is no longer valid.
         /// </summary>
-        void ClearAdaptiveData()
-        {
-        }
+        // LUCENENET: see the note on UpdateAdaptiveData above.
+        void ClearAdaptiveData();
     }
 }

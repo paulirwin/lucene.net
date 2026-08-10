@@ -22,7 +22,7 @@ namespace Opennlp.Tools.Ml.Model
     /// This interface allows one to implement a prior distribution for use in
     /// maximum entropy model training.
     /// </summary>
-    public interface Prior
+    internal interface Prior
     {
         /// <summary>
         /// Populates the specified array with the the log of the distribution for the specified context.

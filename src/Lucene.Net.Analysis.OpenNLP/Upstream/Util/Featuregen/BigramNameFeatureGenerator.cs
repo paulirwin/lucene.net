@@ -19,7 +19,7 @@ using System.Collections.Generic;
 
 namespace Opennlp.Tools.Util.Featuregen
 {
-    public class BigramNameFeatureGenerator : AdaptiveFeatureGenerator
+    internal class BigramNameFeatureGenerator : AdaptiveFeatureGenerator
     {
         public virtual void CreateFeatures(IList<string> features, string[] tokens, int index, string[] previousOutcomes)
         {
@@ -39,6 +39,17 @@ namespace Opennlp.Tools.Util.Featuregen
                 string nwc = FeatureGeneratorUtil.TokenFeature(tokens[index + 1]);
                 features.Add("wc,nc=" + wc + "," + nwc);
             }
+        }
+
+        // LUCENENET: AdaptiveFeatureGenerator declares these as Java 8 default
+        // methods; C# default interface implementations are unavailable on
+        // netstandard2.0/net462, so the empty bodies are supplied here.
+        public virtual void UpdateAdaptiveData(string[] tokens, string[] outcomes)
+        {
+        }
+
+        public virtual void ClearAdaptiveData()
+        {
         }
     }
 }

@@ -21,7 +21,7 @@ using Lucene;
 
 namespace Opennlp.Tools.Lemmatizer
 {
-    public class LemmatizerFactory : BaseToolFactory
+    internal class LemmatizerFactory : BaseToolFactory
     {
         /// <summary>
         /// Creates a {@link LemmatizerFactory} that provides the default implementation

@@ -24,7 +24,7 @@ namespace Opennlp.Tools.Util.Model
     /// <summary>
     /// Responsible to create an artifact from an {@link InputStream}.
     /// </summary>
-    public interface ArtifactSerializer<T> : ArtifactSerializer
+    internal interface ArtifactSerializer<T> : ArtifactSerializer
     {
         /// <summary>
         /// Creates the artifact from the provided {@link InputStream}.
@@ -41,8 +41,6 @@ namespace Opennlp.Tools.Util.Model
         // /// </summary>
         // void Serialize(T artifact, Stream @out);
 
-        object? ArtifactSerializer.Create(Stream @in) => Create(@in);
-
         // void ArtifactSerializer.Serialize(object artifact, Stream @out)
         // {
         //     if (artifact is T typedArtifact)
@@ -56,7 +54,7 @@ namespace Opennlp.Tools.Util.Model
         // }
     }
 
-    public interface ArtifactSerializer
+    internal interface ArtifactSerializer
     {
         object? Create(Stream @in);
         //void Serialize(object artifact, Stream @out);

@@ -20,8 +20,8 @@ using System.Collections.Generic;
 
 namespace Opennlp.Tools.Util.Featuregen
 {
-    public interface ArtifactToSerializerMapper
+    internal interface ArtifactToSerializerMapper
     {
-        IDictionary<string, ArtifactSerializer<T>> GetArtifactSerializerMapping<T>();
+        IDictionary<string, ArtifactSerializer> GetArtifactSerializerMapping();
     }
 }

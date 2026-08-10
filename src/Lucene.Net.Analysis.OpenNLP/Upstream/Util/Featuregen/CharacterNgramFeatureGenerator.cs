@@ -25,7 +25,7 @@ namespace Opennlp.Tools.Util.Featuregen
     /// generate features about each token.
     /// The minimum and maximum length can be specified.
     /// </summary>
-    public class CharacterNgramFeatureGenerator : AdaptiveFeatureGenerator
+    internal class CharacterNgramFeatureGenerator : AdaptiveFeatureGenerator
     {
         private readonly int minLength;
         private readonly int maxLength;
@@ -53,6 +53,17 @@ namespace Opennlp.Tools.Util.Featuregen
                     features.Add("ng=" + StringUtil.ToLowerCase(tokenList.GetToken(0)));
                 }
             }
+        }
+
+        // LUCENENET: AdaptiveFeatureGenerator declares these as Java 8 default
+        // methods; C# default interface implementations are unavailable on
+        // netstandard2.0/net462, so the empty bodies are supplied here.
+        public virtual void UpdateAdaptiveData(string[] tokens, string[] outcomes)
+        {
+        }
+
+        public virtual void ClearAdaptiveData()
+        {
         }
     }
 }

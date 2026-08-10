@@ -24,7 +24,7 @@ namespace Opennlp.Tools.Util.Featuregen
     /// This {@link AdaptiveFeatureGenerator} generates features indicating the
     /// outcome associated with a previously occuring word.
     /// </summary>
-    public class PreviousMapFeatureGenerator : AdaptiveFeatureGenerator
+    internal class PreviousMapFeatureGenerator : AdaptiveFeatureGenerator
     {
         private Dictionary<string, string> previousMap = new Dictionary<string, string>();
         public virtual void CreateFeatures(IList<string> features, string[] tokens, int index, string[] preds)

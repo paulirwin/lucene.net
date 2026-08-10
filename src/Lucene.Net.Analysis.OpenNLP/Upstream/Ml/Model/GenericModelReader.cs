@@ -22,7 +22,7 @@ using System.IO;
 
 namespace Opennlp.Tools.Ml.Model
 {
-    public class GenericModelReader : AbstractModelReader
+    internal class GenericModelReader : AbstractModelReader
     {
         private AbstractModelReader delegateModelReader;
         public GenericModelReader(FileInfo f) : base(f)

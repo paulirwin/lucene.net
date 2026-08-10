@@ -28,7 +28,7 @@ namespace Opennlp.Tools.Util.Model
     /// <summary>
     /// Utility class for handling of {@link MaxentModel}s.
     /// </summary>
-    public sealed class ModelUtil
+    internal sealed class ModelUtil
     {
         private ModelUtil()
         {

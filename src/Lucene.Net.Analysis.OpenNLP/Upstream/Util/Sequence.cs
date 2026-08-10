@@ -24,7 +24,7 @@ namespace Opennlp.Tools.Util
     /// <summary>
     /// Represents a weighted sequence of outcomes.
     /// </summary>
-    public class Sequence : IComparable<Sequence>
+    internal class Sequence : IComparable<Sequence>
     {
         private double score;
         private IList<string> outcomes;

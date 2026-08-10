@@ -19,6 +19,7 @@ using Opennlp.Tools.Ml;
 using Opennlp.Tools.Ml.Model;
 using Opennlp.Tools.Util;
 using Opennlp.Tools.Util.Model;
+using Opennlp.Tools.Util.Featuregen;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -35,7 +36,7 @@ namespace Opennlp.Tools.Namefind
     // TODO: Fix the model validation, on loading via constructors and input streams
     public class TokenNameFinderModel : BaseModel
     {
-        public class FeatureGeneratorCreationError : Exception
+        internal class FeatureGeneratorCreationError : Exception
         {
             internal FeatureGeneratorCreationError(Exception t) : base(null, t)
             {
@@ -46,7 +47,7 @@ namespace Opennlp.Tools.Namefind
         private static readonly string MAXENT_MODEL_ENTRY_NAME = "nameFinder.model";
         internal static readonly string GENERATOR_DESCRIPTOR_ENTRY_NAME = "generator.featuregen";
         internal static readonly string SEQUENCE_CODEC_CLASS_NAME_PARAMETER = "sequenceCodecImplName";
-        public TokenNameFinderModel(string languageCode, SequenceClassificationModel<string> nameFinderModel, byte[] generatorDescriptor, Dictionary<string, object> resources, Dictionary<string, string> manifestInfoEntries, SequenceCodec<string> seqCodec, TokenNameFinderFactory factory) : base(COMPONENT_NAME, languageCode, manifestInfoEntries, factory)
+        internal TokenNameFinderModel(string languageCode, SequenceClassificationModel<string> nameFinderModel, byte[] generatorDescriptor, Dictionary<string, object> resources, Dictionary<string, string> manifestInfoEntries, SequenceCodec<string> seqCodec, TokenNameFinderFactory factory) : base(COMPONENT_NAME, languageCode, manifestInfoEntries, factory)
         {
             Init(nameFinderModel, generatorDescriptor, resources, manifestInfoEntries, seqCodec);
             if (!seqCodec.AreOutcomesCompatible(nameFinderModel.GetOutcomes()))
@@ -55,7 +56,7 @@ namespace Opennlp.Tools.Namefind
             }
         }
 
-        public TokenNameFinderModel(string languageCode, MaxentModel nameFinderModel, int beamSize, byte[] generatorDescriptor, Dictionary<string, object> resources, Dictionary<string, string> manifestInfoEntries, SequenceCodec<string> seqCodec, TokenNameFinderFactory factory) : base(COMPONENT_NAME, languageCode, manifestInfoEntries, factory)
+        internal TokenNameFinderModel(string languageCode, MaxentModel nameFinderModel, int beamSize, byte[] generatorDescriptor, Dictionary<string, object> resources, Dictionary<string, string> manifestInfoEntries, SequenceCodec<string> seqCodec, TokenNameFinderFactory factory) : base(COMPONENT_NAME, languageCode, manifestInfoEntries, factory)
         {
             Properties manifest = (Properties)artifactMap[MANIFEST_ENTRY];
             manifest.Put(BeamSearch.BEAM_SIZE_PARAMETER, beamSize.ToString());
@@ -67,11 +68,11 @@ namespace Opennlp.Tools.Namefind
         }
 
         // TODO: Extend this one with beam size!
-        public TokenNameFinderModel(string languageCode, MaxentModel nameFinderModel, byte[] generatorDescriptor, Dictionary<string, object> resources, Dictionary<string, string> manifestInfoEntries) : this(languageCode, nameFinderModel, NameFinderME.DEFAULT_BEAM_SIZE, generatorDescriptor, resources, manifestInfoEntries, new BioCodec(), new TokenNameFinderFactory())
+        internal TokenNameFinderModel(string languageCode, MaxentModel nameFinderModel, byte[] generatorDescriptor, Dictionary<string, object> resources, Dictionary<string, string> manifestInfoEntries) : this(languageCode, nameFinderModel, NameFinderME.DEFAULT_BEAM_SIZE, generatorDescriptor, resources, manifestInfoEntries, new BioCodec(), new TokenNameFinderFactory())
         {
         }
 
-        public TokenNameFinderModel(string languageCode, MaxentModel nameFinderModel, Dictionary<string, object> resources, Dictionary<string, string> manifestInfoEntries) : this(languageCode, nameFinderModel, null, resources, manifestInfoEntries)
+        internal TokenNameFinderModel(string languageCode, MaxentModel nameFinderModel, Dictionary<string, object> resources, Dictionary<string, string> manifestInfoEntries) : this(languageCode, nameFinderModel, null, resources, manifestInfoEntries)
         {
         }
 
@@ -94,7 +95,7 @@ namespace Opennlp.Tools.Namefind
         private void Init(object nameFinderModel, byte[] generatorDescriptor, Dictionary<string, object> resources, Dictionary<string, string> manifestInfoEntries, SequenceCodec<string> seqCodec)
         {
             Properties manifest = (Properties)artifactMap[MANIFEST_ENTRY];
-            manifest.Put(SEQUENCE_CODEC_CLASS_NAME_PARAMETER, seqCodec.GetType().GetName());
+            manifest.Put(SEQUENCE_CODEC_CLASS_NAME_PARAMETER, seqCodec.GetType().FullName);
             artifactMap.Put(MAXENT_MODEL_ENTRY_NAME, nameFinderModel);
             if (generatorDescriptor != null && generatorDescriptor.Length > 0)
                 artifactMap.Put(GENERATOR_DESCRIPTOR_ENTRY_NAME, generatorDescriptor);
@@ -117,7 +118,7 @@ namespace Opennlp.Tools.Namefind
             CheckArtifactMap();
         }
 
-        public virtual SequenceClassificationModel<string> GetNameFinderSequenceModel()
+        internal virtual SequenceClassificationModel<string> GetNameFinderSequenceModel()
         {
             Properties manifest = (Properties)artifactMap[MANIFEST_ENTRY];
             if (artifactMap[MAXENT_MODEL_ENTRY_NAME] is MaxentModel)
@@ -133,7 +134,7 @@ namespace Opennlp.Tools.Namefind
             }
             else if (artifactMap[MAXENT_MODEL_ENTRY_NAME] is SequenceClassificationModel<string>)
             {
-                return (SequenceClassificationModel)artifactMap[MAXENT_MODEL_ENTRY_NAME];
+                return (SequenceClassificationModel<string>)artifactMap[MAXENT_MODEL_ENTRY_NAME];
             }
             else
             {
@@ -146,17 +147,17 @@ namespace Opennlp.Tools.Namefind
             return typeof(TokenNameFinderFactory);
         }
 
-        public virtual SequenceCodec<string> GetSequenceCodec()
+        internal virtual SequenceCodec<string> GetSequenceCodec()
         {
             return this.GetFactory().GetSequenceCodec();
         }
 
-        public virtual TokenNameFinderFactory GetFactory()
+        internal virtual TokenNameFinderFactory GetFactory()
         {
             return (TokenNameFinderFactory)this.toolFactory;
         }
 
-        protected override void CreateArtifactSerializers(Dictionary<string, ArtifactSerializer> serializers)
+        internal override void CreateArtifactSerializers(Dictionary<string, ArtifactSerializer> serializers)
         {
             base.CreateArtifactSerializers(serializers);
             serializers.Put("featuregen", new ByteArraySerializer());
@@ -171,7 +172,7 @@ namespace Opennlp.Tools.Namefind
         /// is 'wordcluster', which is the key used to add the serializer to the map.
         /// </summary>
         /// <returns>the map containing the added serializers</returns>
-        public static Dictionary<string, ArtifactSerializer> CreateArtifactSerializers()
+        internal static Dictionary<string, ArtifactSerializer> CreateArtifactSerializers()
         {
 
             // TODO: Not so nice, because code cannot really be reused by the other create serializer method
@@ -182,10 +183,10 @@ namespace Opennlp.Tools.Namefind
             //       Usually the feature generators should know what type of resource they expect.
             Dictionary<string, ArtifactSerializer> serializers = BaseModel.CreateArtifactSerializers();
             serializers.Put("featuregen", new ByteArraySerializer());
-            serializers.Put("wordcluster", new WordClusterDictionarySerializer());
-            serializers.Put("brownclustertoken", new BrownClusterSerializer());
-            serializers.Put("brownclustertokenclass", new BrownClusterSerializer());
-            serializers.Put("brownclusterbigram", new BrownClusterSerializer());
+            serializers.Put("wordcluster", new WordClusterDictionary.WordClusterDictionarySerializer());
+            serializers.Put("brownclustertoken", new BrownCluster.BrownClusterSerializer());
+            serializers.Put("brownclustertokenclass", new BrownCluster.BrownClusterSerializer());
+            serializers.Put("brownclusterbigram", new BrownCluster.BrownClusterSerializer());
             return serializers;
         }
 

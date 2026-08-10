@@ -23,7 +23,7 @@ namespace Opennlp.Tools.Util
     /// <summary>
     /// The {@link StringList} is an immutable list of {@link String}s.
     /// </summary>
-    public class StringList : IEnumerable<string>
+    internal class StringList : IEnumerable<string>
     {
         private string[] tokens;
         /// <summary>

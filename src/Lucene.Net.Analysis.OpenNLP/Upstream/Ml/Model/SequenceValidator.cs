@@ -18,7 +18,7 @@ using System;
 
 namespace Opennlp.Tools.Util
 {
-    public interface SequenceValidator<T>
+    internal interface SequenceValidator<T>
     {
         /// <summary>
         /// Determines whether a particular continuation of a sequence is valid.

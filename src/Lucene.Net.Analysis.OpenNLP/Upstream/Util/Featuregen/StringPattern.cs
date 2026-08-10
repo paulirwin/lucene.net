@@ -25,7 +25,7 @@ namespace Opennlp.Tools.Util.Featuregen
     /// <summary>
     /// Recognizes predefined patterns in strings.
     /// </summary>
-    public class StringPattern
+    internal class StringPattern
     {
         private static readonly int INITAL_CAPITAL_LETTER = 0x1;
         private static readonly int ALL_CAPITAL_LETTER = 0x1 << 1;

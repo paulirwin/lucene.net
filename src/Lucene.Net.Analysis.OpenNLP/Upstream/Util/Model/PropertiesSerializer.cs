@@ -40,5 +40,10 @@ namespace Opennlp.Tools.Util.Model
         {
             factories.Put("properties", new PropertiesSerializer());
         }
+
+        // LUCENENET: upstream relies on a default interface implementation to
+        // bridge the non-generic ArtifactSerializer; DIMs are unavailable on
+        // netstandard2.0/net462, so the bridge is explicit here.
+        object ArtifactSerializer.Create(Stream @in) => Create(@in);
     }
 }

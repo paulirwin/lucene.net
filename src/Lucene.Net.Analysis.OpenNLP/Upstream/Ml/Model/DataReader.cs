@@ -17,7 +17,7 @@
 
 namespace Opennlp.Tools.Ml.Model
 {
-    public interface DataReader
+    internal interface DataReader
     {
         double ReadDouble();
         int ReadInt();

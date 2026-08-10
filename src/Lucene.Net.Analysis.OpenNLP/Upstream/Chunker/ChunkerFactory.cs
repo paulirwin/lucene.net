@@ -21,7 +21,7 @@ using Lucene;
 
 namespace Opennlp.Tools.Chunker
 {
-    public class ChunkerFactory : BaseToolFactory
+    internal class ChunkerFactory : BaseToolFactory
     {
         /// <summary>
         /// Creates a {@link ChunkerFactory} that provides the default implementation

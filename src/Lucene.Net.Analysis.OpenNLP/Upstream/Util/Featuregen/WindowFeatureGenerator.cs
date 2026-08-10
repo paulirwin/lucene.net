@@ -28,7 +28,7 @@ namespace Opennlp.Tools.Util.Featuregen
     /// Previous tokens are prefixed with p distance
     /// Next tokens are prefix with n distance
     /// </summary>
-    public class WindowFeatureGenerator : AdaptiveFeatureGenerator
+    internal class WindowFeatureGenerator : AdaptiveFeatureGenerator
     {
         public static readonly string PREV_PREFIX = "p";
         public static readonly string NEXT_PREFIX = "n";

@@ -26,7 +26,7 @@ namespace Opennlp.Tools.Chunker
     /// The class represents a maximum-entropy-based chunker.  Such a chunker can be used to
     /// find flat structures based on sequence inputs such as noun phrases or named entities.
     /// </summary>
-    public class ChunkerME : Chunker
+    internal class ChunkerME : Chunker
     {
         public static readonly int DEFAULT_BEAM_SIZE = 10;
         private Sequence bestSequence;

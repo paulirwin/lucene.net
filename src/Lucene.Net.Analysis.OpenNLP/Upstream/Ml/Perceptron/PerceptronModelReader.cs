@@ -24,7 +24,7 @@ namespace Opennlp.Tools.Ml.Perceptron
     /// <summary>
     /// Abstract parent class for readers of Perceptron.
     /// </summary>
-    public class PerceptronModelReader : AbstractModelReader
+    internal class PerceptronModelReader : AbstractModelReader
     {
         public PerceptronModelReader(FileInfo file) : base(file)
         {

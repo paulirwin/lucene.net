@@ -6,6 +6,10 @@ using System.IO;
 using System.Text;
 using Opennlp.Tools.Chunker;
 using Opennlp.Tools.Lemmatizer;
+using Opennlp.Tools.Namefind;
+using Opennlp.Tools.Postag;
+using Opennlp.Tools.Sentdetect;
+using Opennlp.Tools.Tokenize;
 
 namespace Lucene.Net.Analysis.OpenNlp.Tools
 {

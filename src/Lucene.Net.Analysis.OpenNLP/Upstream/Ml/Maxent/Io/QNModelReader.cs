@@ -22,7 +22,7 @@ using Opennlp.Tools.Ml.Maxent.Quasinewton;
 
 namespace Opennlp.Tools.Ml.Maxent.Io
 {
-    public class QNModelReader : GISModelReader
+    internal class QNModelReader : GISModelReader
     {
         public QNModelReader(DataReader dataReader) : base(dataReader)
         {
@@ -39,7 +39,10 @@ namespace Opennlp.Tools.Ml.Maxent.Io
                 Console.WriteLine("Error: attempting to load a " + modelType + " model as a MAXENT_QN model." + " You should expect problems.");
         }
 
-        public override QNModel ConstructModel()
+        // LUCENENET: upstream returns the covariant QNModel, but covariant return
+        // types require net5.0+, so the base AbstractModel type is used here. The
+        // returned instance is still a QNModel.
+        public override AbstractModel ConstructModel()
         {
             string[] outcomeLabels = GetOutcomes();
             int[][] outcomePatterns = GetOutcomePatterns();

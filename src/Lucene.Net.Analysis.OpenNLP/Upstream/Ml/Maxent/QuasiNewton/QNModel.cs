@@ -20,7 +20,7 @@ using System;
 
 namespace Opennlp.Tools.Ml.Maxent.Quasinewton
 {
-    public class QNModel : AbstractModel
+    internal class QNModel : AbstractModel
     {
         public QNModel(Context[] @params, String[] predLabels, String[] outcomeNames) : base(@params, predLabels, outcomeNames)
         {
@@ -34,7 +34,9 @@ namespace Opennlp.Tools.Ml.Maxent.Quasinewton
 
         private Context GetPredIndex(string predicate)
         {
-            return pmap[predicate];
+            // LUCENENET: Java's Map.get() returns null for an absent key; the .NET indexer throws.
+            pmap.TryGetValue(predicate, out Context value);
+            return value;
         }
 
         public override double[] Eval(string[] context)

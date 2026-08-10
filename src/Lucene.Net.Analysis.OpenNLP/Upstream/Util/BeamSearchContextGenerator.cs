@@ -21,7 +21,7 @@ namespace Opennlp.Tools.Util
     /// <summary>
     /// Interface for context generators used with a sequence beam search.
     /// </summary>
-    public interface BeamSearchContextGenerator<T>
+    internal interface BeamSearchContextGenerator<T>
     {
         /// <summary>
         /// Returns the context for the specified position in the specified sequence (list).

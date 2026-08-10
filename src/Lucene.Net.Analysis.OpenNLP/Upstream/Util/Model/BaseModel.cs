@@ -51,7 +51,7 @@ namespace Opennlp.Tools.Util.Model
         private static string SERIALIZER_CLASS_NAME_PREFIX = "serializer-class-";
         private Dictionary<string, ArtifactSerializer> artifactSerializers = new Dictionary<string, ArtifactSerializer>();
         protected Dictionary<string, object> artifactMap = new Dictionary<string, object>();
-        protected BaseToolFactory toolFactory;
+        internal BaseToolFactory toolFactory;
         private string componentName;
         private bool subclassSerializersInitiated = false;
         private bool finishedLoadingArtifacts = false;
@@ -77,9 +77,13 @@ namespace Opennlp.Tools.Util.Model
         ///          additional information in the manifest</param>
         /// <param name="factory">
         ///          the factory</param>
-        protected BaseModel(string componentName, string languageCode, Dictionary<string, string>? manifestInfoEntries, BaseToolFactory? factory) : this(componentName, false)
+        internal BaseModel(string componentName, string languageCode, Dictionary<string, string>? manifestInfoEntries, BaseToolFactory? factory) : this(componentName, false)
         {
-            ArgumentException.ThrowIfNullOrEmpty(languageCode);
+            // LUCENENET: ArgumentException.ThrowIfNullOrEmpty is net7.0+.
+            if (string.IsNullOrEmpty(languageCode))
+            {
+                throw new ArgumentException("languageCode must not be null or empty", nameof(languageCode));
+            }
             CreateBaseArtifactSerializers(artifactSerializers);
             Properties manifest = new Properties();
             manifest.SetProperty(MANIFEST_VERSION_PROPERTY, "1.0");
@@ -308,7 +312,7 @@ namespace Opennlp.Tools.Util.Model
             return entry.Substring(extensionIndex);
         }
 
-        protected virtual ArtifactSerializer GetArtifactSerializer(string resourceName)
+        internal virtual ArtifactSerializer GetArtifactSerializer(string resourceName)
         {
             try
             {
@@ -320,7 +324,7 @@ namespace Opennlp.Tools.Util.Model
             }
         }
 
-        protected static Dictionary<string, ArtifactSerializer> CreateArtifactSerializers()
+        internal static Dictionary<string, ArtifactSerializer> CreateArtifactSerializers()
         {
             Dictionary<string, ArtifactSerializer> serializers = new Dictionary<string, ArtifactSerializer>();
             GenericModelSerializer.Register(serializers);
@@ -346,7 +350,7 @@ namespace Opennlp.Tools.Util.Model
         /// </summary>
         /// <param name="serializers">the key of the map is the file extension used to lookup
         ///     the {@link ArtifactSerializer}.</param>
-        protected virtual void CreateArtifactSerializers(Dictionary<string, ArtifactSerializer> serializers)
+        internal virtual void CreateArtifactSerializers(Dictionary<string, ArtifactSerializer> serializers)
         {
             if (this.toolFactory != null)
                 serializers.PutAll(this.toolFactory.CreateArtifactSerializersMap());
@@ -380,7 +384,7 @@ namespace Opennlp.Tools.Util.Model
                 {
                     version = Version.Parse(versionString);
                 }
-                catch (NumberFormatException e)
+                catch (System.FormatException e)
                 {
                     throw new InvalidFormatException("Unable to parse model version '" + versionString + "'!", e);
                 }
@@ -576,8 +580,9 @@ namespace Opennlp.Tools.Util.Model
 
         public virtual T GetArtifact<T>(string key)
         {
-            object artifact = artifactMap[key];
-            if (artifact == null)
+            // LUCENENET: Java's Map.get() returns null for an absent key, whereas the
+            // .NET indexer throws KeyNotFoundException, so TryGetValue is used here.
+            if (!artifactMap.TryGetValue(key, out object artifact) || artifact is null)
                 return default;
             return (T)artifact;
         }

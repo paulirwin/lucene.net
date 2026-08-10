@@ -20,7 +20,7 @@ using System.Collections.Generic;
 
 namespace Opennlp.Tools.Util
 {
-    public interface SequenceCodec<T>
+    internal interface SequenceCodec<T>
     {
         /// <summary>
         /// Decodes a sequence T objects into Span objects.

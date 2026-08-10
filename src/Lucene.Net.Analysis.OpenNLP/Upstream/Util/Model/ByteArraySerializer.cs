@@ -19,7 +19,7 @@ using System.IO;
 
 namespace Opennlp.Tools.Util.Model
 {
-    public class ByteArraySerializer : ArtifactSerializer<byte[]>
+    internal class ByteArraySerializer : ArtifactSerializer<byte[]>
     {
         public virtual byte[] Create(Stream @in)
         {
@@ -30,5 +30,10 @@ namespace Opennlp.Tools.Util.Model
         // {
         //     @out.Write(artifact);
         // }
+
+        // LUCENENET: upstream relies on a default interface implementation to
+        // bridge the non-generic ArtifactSerializer; DIMs are unavailable on
+        // netstandard2.0/net462, so the bridge is explicit here.
+        object ArtifactSerializer.Create(Stream @in) => Create(@in);
     }
 }

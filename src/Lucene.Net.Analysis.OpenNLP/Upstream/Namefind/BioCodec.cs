@@ -23,7 +23,7 @@ using System.Text.RegularExpressions;
 
 namespace Opennlp.Tools.Namefind
 {
-    public class BioCodec : SequenceCodec<string>
+    internal class BioCodec : SequenceCodec<string>
     {
         public static readonly string START = "start";
         public static readonly string CONTINUE = "cont";
@@ -48,7 +48,7 @@ namespace Opennlp.Tools.Namefind
             for (int li = 0; li < c.Count; li++)
             {
                 string chunkTag = c[li];
-                if (chunkTag.EndsWith(BioCodec.START))
+                if (chunkTag.EndsWith(BioCodec.START, StringComparison.Ordinal))
                 {
                     if (start != -1)
                     {
@@ -58,11 +58,11 @@ namespace Opennlp.Tools.Namefind
                     start = li;
                     end = li + 1;
                 }
-                else if (chunkTag.EndsWith(BioCodec.CONTINUE))
+                else if (chunkTag.EndsWith(BioCodec.CONTINUE, StringComparison.Ordinal))
                 {
                     end = li + 1;
                 }
-                else if (chunkTag.EndsWith(BioCodec.OTHER))
+                else if (chunkTag.EndsWith(BioCodec.OTHER, StringComparison.Ordinal))
                 {
                     if (start != -1)
                     {
@@ -136,11 +136,11 @@ namespace Opennlp.Tools.Namefind
             for (int i = 0; i < outcomes.Length; i++)
             {
                 string outcome = outcomes[i];
-                if (outcome.EndsWith(BioCodec.START))
+                if (outcome.EndsWith(BioCodec.START, StringComparison.Ordinal))
                 {
                     start.Add(outcome.Substring(0, outcome.Length - BioCodec.START.Length));
                 }
-                else if (outcome.EndsWith(BioCodec.CONTINUE))
+                else if (outcome.EndsWith(BioCodec.CONTINUE, StringComparison.Ordinal))
                 {
                     cont.Add(outcome.Substring(0, outcome.Length - BioCodec.CONTINUE.Length));
                 }

@@ -18,7 +18,7 @@ using Opennlp.Tools.Util;
 
 namespace Opennlp.Tools.Lemmatizer
 {
-    public class DefaultLemmatizerSequenceValidator : SequenceValidator<string>
+    internal class DefaultLemmatizerSequenceValidator : SequenceValidator<string>
     {
         //TODO implement this
         public virtual bool ValidSequence(int i, string[] sequence, string[] s, string outcome)

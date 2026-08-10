@@ -37,17 +37,17 @@ namespace Opennlp.Tools.Chunker
     {
         private static readonly string COMPONENT_NAME = "ChunkerME";
         private static readonly string CHUNKER_MODEL_ENTRY_NAME = "chunker.model";
-        public ChunkerModel(string languageCode, SequenceClassificationModel<string> chunkerModel, Dictionary<string, string> manifestInfoEntries, ChunkerFactory factory) : base(COMPONENT_NAME, languageCode, manifestInfoEntries, factory)
+        internal ChunkerModel(string languageCode, SequenceClassificationModel<string> chunkerModel, Dictionary<string, string> manifestInfoEntries, ChunkerFactory factory) : base(COMPONENT_NAME, languageCode, manifestInfoEntries, factory)
         {
             artifactMap.Put(CHUNKER_MODEL_ENTRY_NAME, chunkerModel);
             CheckArtifactMap();
         }
 
-        public ChunkerModel(string languageCode, MaxentModel chunkerModel, Dictionary<string, string> manifestInfoEntries, ChunkerFactory factory) : this(languageCode, chunkerModel, ChunkerME.DEFAULT_BEAM_SIZE, manifestInfoEntries, factory)
+        internal ChunkerModel(string languageCode, MaxentModel chunkerModel, Dictionary<string, string> manifestInfoEntries, ChunkerFactory factory) : this(languageCode, chunkerModel, ChunkerME.DEFAULT_BEAM_SIZE, manifestInfoEntries, factory)
         {
         }
 
-        public ChunkerModel(string languageCode, MaxentModel chunkerModel, int beamSize, Dictionary<string, string> manifestInfoEntries, ChunkerFactory factory) : base(COMPONENT_NAME, languageCode, manifestInfoEntries, factory)
+        internal ChunkerModel(string languageCode, MaxentModel chunkerModel, int beamSize, Dictionary<string, string> manifestInfoEntries, ChunkerFactory factory) : base(COMPONENT_NAME, languageCode, manifestInfoEntries, factory)
         {
             artifactMap.Put(CHUNKER_MODEL_ENTRY_NAME, chunkerModel);
             Properties manifest = (Properties)artifactMap[MANIFEST_ENTRY];
@@ -55,7 +55,7 @@ namespace Opennlp.Tools.Chunker
             CheckArtifactMap();
         }
 
-        public ChunkerModel(string languageCode, MaxentModel chunkerModel, ChunkerFactory factory) : this(languageCode, chunkerModel, null, factory)
+        internal ChunkerModel(string languageCode, MaxentModel chunkerModel, ChunkerFactory factory) : this(languageCode, chunkerModel, null, factory)
         {
         }
 
@@ -95,7 +95,7 @@ namespace Opennlp.Tools.Chunker
         /// <summary>
         /// </summary>
         /// <remarks>@deprecateduse getChunkerSequenceModel instead. This method will be removed soon.</remarks>
-        public virtual MaxentModel GetChunkerModel()
+        internal virtual MaxentModel GetChunkerModel()
         {
             if (artifactMap[CHUNKER_MODEL_ENTRY_NAME] is MaxentModel)
             {
@@ -107,7 +107,7 @@ namespace Opennlp.Tools.Chunker
             }
         }
 
-        public virtual SequenceClassificationModel<TokenTag> GetChunkerSequenceModel()
+        internal virtual SequenceClassificationModel<TokenTag> GetChunkerSequenceModel()
         {
             Properties manifest = (Properties)artifactMap[MANIFEST_ENTRY];
             if (artifactMap[CHUNKER_MODEL_ENTRY_NAME] is MaxentModel)
@@ -136,7 +136,7 @@ namespace Opennlp.Tools.Chunker
             return typeof(ChunkerFactory);
         }
 
-        public virtual ChunkerFactory GetFactory()
+        internal virtual ChunkerFactory GetFactory()
         {
             return (ChunkerFactory)this.toolFactory;
         }

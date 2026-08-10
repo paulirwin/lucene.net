@@ -21,12 +21,12 @@ using System.IO.Compression;
 
 namespace Opennlp.Tools.Ml.Model
 {
-    public class PlainTextFileDataReader : DataReader
+    internal class PlainTextFileDataReader : DataReader
     {
         private StreamReader input;
         public PlainTextFileDataReader(FileInfo f)
         {
-            if (f.Name.EndsWith(".gz"))
+            if (f.Name.EndsWith(".gz", StringComparison.Ordinal))
             {
                 input = new StreamReader(new GZipStream(f.OpenRead(), CompressionMode.Decompress));
             }

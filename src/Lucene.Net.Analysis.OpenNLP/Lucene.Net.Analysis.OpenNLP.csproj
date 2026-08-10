@@ -30,13 +30,7 @@
   <Import Project="$(SolutionDir).build/nuget.props" />
 
   <PropertyGroup>
-    <!-- Currently, IKVM doesn't officially support building NetFX on anything but Windows, so we skip it for contributors who may be on various platforms.
-        We can remove the condition once that has been addressed. See: https://github.com/ikvmnet/ikvm-maven/issues/49 -->
-    <!-- net10.0 is conditional on VS version (VS2024+ = 18.0) -->
-    <!-- .NET Framework is conditional on VS version (VS2024+ = 18.0) due to invalid build warnings with C# 14.0 build features -->
-    <TargetFrameworks>net10.0;net8.0</TargetFrameworks>
-    <TargetFrameworks Condition=" '$(IsLegacyVisualStudioVersion)' == 'true' ">net8.0</TargetFrameworks>
-    <TargetFrameworks Condition=" $([MSBuild]::IsOsPlatform('Windows')) And '$(IsLegacyVisualStudioVersion)' != 'true' ">$(TargetFrameworks);net472</TargetFrameworks>
+    <TargetFrameworks>$(LibraryTargetFrameworks)</TargetFrameworks>
 
     <AssemblyTitle>Lucene.Net.Analysis.OpenNLP</AssemblyTitle>
     <PackageTags>$(PackageTags);analysis;natural;language;processing;opennlp</PackageTags>
@@ -53,10 +47,21 @@
 
   <ItemGroup>
     <PackageReference Include="ICU4N" Version="$(ICU4NPackageVersion)" />
+  </ItemGroup>
 
-    <!-- This is a transitive dependency of IKVM, but the version it references is vulnerable. We are currently blocked from upgrading
-        IKVM due to the Azure DevOps limitation of 10GB for a single build agent, so we have to add this reference instead. -->
-    <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonPackageVersion)" />
+  <!-- System.HashCode is not part of netstandard2.0 or .NET Framework. -->
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net462' ">
+    <PackageReference Include="Microsoft.Bcl.HashCode" Version="$(MicrosoftBclHashCodePackageVersion)" />
+  </ItemGroup>
+
+  <!-- ZipArchive lives in a separate assembly on .NET Framework. -->
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Lucene.Net.Tests.Analysis.OpenNLP" />
   </ItemGroup>
 
   <ItemGroup>

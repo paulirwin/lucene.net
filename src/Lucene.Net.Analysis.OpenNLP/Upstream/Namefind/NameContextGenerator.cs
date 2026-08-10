@@ -22,7 +22,7 @@ namespace Opennlp.Tools.Namefind
     /// <summary>
     /// Interface for generating the context for an name finder by specifying a set of geature generators.
     /// </summary>
-    public interface NameContextGenerator : BeamSearchContextGenerator<string>
+    internal interface NameContextGenerator : BeamSearchContextGenerator<string>
     {
         /// <summary>
         /// Adds a feature generator to this set of feature generators.

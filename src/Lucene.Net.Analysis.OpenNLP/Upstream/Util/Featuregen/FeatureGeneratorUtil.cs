@@ -22,7 +22,7 @@ namespace Opennlp.Tools.Util.Featuregen
     /// <summary>
     /// This class provide common utilities for feature generation.
     /// </summary>
-    public class FeatureGeneratorUtil
+    internal class FeatureGeneratorUtil
     {
         private static readonly string TOKEN_CLASS_PREFIX = "wc";
         private static readonly string TOKEN_AND_CLASS_PREFIX = "w&c";

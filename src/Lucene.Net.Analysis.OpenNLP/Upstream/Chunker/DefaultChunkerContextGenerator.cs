@@ -24,7 +24,7 @@ namespace Opennlp.Tools.Chunker
     ///  parsing with conditional random fields. In Proceedings of HLT-NAACL 2003. Association
     ///  for Computational Linguistics, 2003.
     /// </summary>
-    public class DefaultChunkerContextGenerator : ChunkerContextGenerator
+    internal class DefaultChunkerContextGenerator : ChunkerContextGenerator
     {
         /// <summary>
         /// Creates the default context generator a chunker.

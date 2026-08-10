@@ -19,7 +19,7 @@ using System;
 namespace Opennlp.Tools.Ml.Naivebayes
 {
     // LUCENENET: non-generic base class
-    public abstract class Probability
+    internal abstract class Probability
     {
         public abstract double Get();
     }
@@ -28,7 +28,7 @@ namespace Opennlp.Tools.Ml.Naivebayes
     /// Class implementing the probability for a label.
     /// </summary>
     /// <param name="<T>">the label (category) class</param>
-    public class Probability<T> : Probability
+    internal class Probability<T> : Probability
     {
         protected T label;
         protected double probability = 1;

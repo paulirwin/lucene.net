@@ -28,7 +28,7 @@ namespace Opennlp.Tools.Util.Featuregen
     /// The {@link AggregatedFeatureGenerator} aggregates a set of
     /// {@link AdaptiveFeatureGenerator}s and calls them to generate the features.
     /// </summary>
-    public class AggregatedFeatureGenerator : AdaptiveFeatureGenerator
+    internal class AggregatedFeatureGenerator : AdaptiveFeatureGenerator
     {
         /// <summary>
         /// Contains all aggregated {@link AdaptiveFeatureGenerator}s.
@@ -42,7 +42,11 @@ namespace Opennlp.Tools.Util.Featuregen
         {
             foreach (AdaptiveFeatureGenerator generator in generators)
             {
-                ArgumentNullException.ThrowIfNull(generator, "null values in generators are not permitted");
+                // LUCENENET: ArgumentNullException.ThrowIfNull is net6.0+.
+                if (generator is null)
+                {
+                    throw new ArgumentNullException(nameof(generator), "null values in generators are not permitted");
+                }
             }
 
             this.generators = new List<AdaptiveFeatureGenerator>(generators);

@@ -22,12 +22,23 @@ namespace Opennlp.Tools.Util.Featuregen
     /// <summary>
     /// The definition feature maps the underlying distribution of outcomes.
     /// </summary>
-    public class OutcomePriorFeatureGenerator : AdaptiveFeatureGenerator
+    internal class OutcomePriorFeatureGenerator : AdaptiveFeatureGenerator
     {
         private static readonly string OUTCOME_PRIOR_FEATURE = "def";
         public virtual void CreateFeatures(IList<string> features, string[] tokens, int index, string[] previousOutcomes)
         {
             features.Add(OUTCOME_PRIOR_FEATURE);
+        }
+
+        // LUCENENET: AdaptiveFeatureGenerator declares these as Java 8 default
+        // methods; C# default interface implementations are unavailable on
+        // netstandard2.0/net462, so the empty bodies are supplied here.
+        public virtual void UpdateAdaptiveData(string[] tokens, string[] outcomes)
+        {
+        }
+
+        public virtual void ClearAdaptiveData()
+        {
         }
     }
 }

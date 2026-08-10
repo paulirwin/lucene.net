@@ -30,9 +30,9 @@ namespace Opennlp.Tools.Namefind
     /// <summary>
     /// Class for creating a maximum-entropy-based name finder.
     /// </summary>
-    public class NameFinderME : TokenNameFinder
+    internal class NameFinderME : TokenNameFinder
     {
-        private static string[, ] EMPTY = new string[0, 0];
+        private static string[][] EMPTY = new string[0][];
         public static readonly int DEFAULT_BEAM_SIZE = 3;
         private static readonly Regex typedOutcomePattern = new Regex("(.+)-\\w+", RegexOptions.Compiled);
         public static readonly string START = "start";
@@ -61,7 +61,7 @@ namespace Opennlp.Tools.Namefind
             AdaptiveFeatureGenerator featureGenerator;
             if (generatorDescriptor != null)
             {
-                featureGenerator = GeneratorFactory.Create(new ByteArrayInputStream(generatorDescriptor), (key) =>
+                featureGenerator = GeneratorFactory.Create(new System.IO.MemoryStream(generatorDescriptor), (key) =>
                 {
                     if (resources != null)
                     {
@@ -184,50 +184,50 @@ namespace Opennlp.Tools.Namefind
             return sprobs;
         }
 
-        public static TokenNameFinderModel Train(string languageCode, string type, ObjectStream<NameSample> samples, TrainingParameters trainParams, TokenNameFinderFactory factory)
-        {
-            trainParams.PutIfAbsent(TrainingParameters.ALGORITHM_PARAM, PerceptronTrainer.PERCEPTRON_VALUE);
-            trainParams.PutIfAbsent(TrainingParameters.CUTOFF_PARAM, 0);
-            trainParams.PutIfAbsent(TrainingParameters.ITERATIONS_PARAM, 300);
-            int beamSize = trainParams.GetIntParameter(BeamSearch.BEAM_SIZE_PARAMETER, NameFinderME.DEFAULT_BEAM_SIZE);
-            Dictionary<string, string> manifestInfoEntries = new Dictionary<string, string>();
-            MaxentModel nameFinderModel = null;
-            SequenceClassificationModel<string> seqModel = null;
-            TrainerType trainerType = TrainerFactory.GetTrainerType(trainParams);
-            if (TrainerType.EVENT_MODEL_TRAINER.Equals(trainerType))
-            {
-                ObjectStream<Event> eventStream = new NameFinderEventStream(samples, type, factory.CreateContextGenerator(), factory.CreateSequenceCodec());
-                EventTrainer trainer = TrainerFactory.GetEventTrainer(trainParams, manifestInfoEntries);
-                nameFinderModel = trainer.Train(eventStream);
-            } // TODO: Maybe it is not a good idea, that these two don't use the context generator ?!
-            else
-// These also don't use the sequence codec ?!
-            if (TrainerType.EVENT_MODEL_SEQUENCE_TRAINER.Equals(trainerType))
-            {
-                NameSampleSequenceStream ss = new NameSampleSequenceStream(samples, factory.CreateContextGenerator());
-                EventModelSequenceTrainer trainer = TrainerFactory.GetEventModelSequenceTrainer(trainParams, manifestInfoEntries);
-                nameFinderModel = trainer.Train(ss);
-            }
-            else if (TrainerType.SEQUENCE_TRAINER.Equals(trainerType))
-            {
-                SequenceTrainer trainer = TrainerFactory.GetSequenceModelTrainer(trainParams, manifestInfoEntries);
-                NameSampleSequenceStream ss = new NameSampleSequenceStream(samples, factory.CreateContextGenerator(), false);
-                seqModel = trainer.Train(ss);
-            }
-            else
-            {
-                throw new InvalidOperationException("Unexpected trainer type!");
-            }
-
-            if (seqModel != null)
-            {
-                return new TokenNameFinderModel(languageCode, seqModel, factory.GetFeatureGenerator(), factory.GetResources(), manifestInfoEntries, factory.GetSequenceCodec(), factory);
-            }
-            else
-            {
-                return new TokenNameFinderModel(languageCode, nameFinderModel, beamSize, factory.GetFeatureGenerator(), factory.GetResources(), manifestInfoEntries, factory.GetSequenceCodec(), factory);
-            }
-        }
+        // public static TokenNameFinderModel Train(string languageCode, string type, ObjectStream<NameSample> samples, TrainingParameters trainParams, TokenNameFinderFactory factory)
+        // {
+        //     trainParams.PutIfAbsent(TrainingParameters.ALGORITHM_PARAM, PerceptronTrainer.PERCEPTRON_VALUE);
+        //     trainParams.PutIfAbsent(TrainingParameters.CUTOFF_PARAM, 0);
+        //     trainParams.PutIfAbsent(TrainingParameters.ITERATIONS_PARAM, 300);
+        //     int beamSize = trainParams.GetIntParameter(BeamSearch.BEAM_SIZE_PARAMETER, NameFinderME.DEFAULT_BEAM_SIZE);
+        //     Dictionary<string, string> manifestInfoEntries = new Dictionary<string, string>();
+        //     MaxentModel nameFinderModel = null;
+        //     SequenceClassificationModel<string> seqModel = null;
+        //     TrainerType trainerType = TrainerFactory.GetTrainerType(trainParams);
+        //     if (TrainerType.EVENT_MODEL_TRAINER.Equals(trainerType))
+        //     {
+        //         ObjectStream<Event> eventStream = new NameFinderEventStream(samples, type, factory.CreateContextGenerator(), factory.CreateSequenceCodec());
+        //         EventTrainer trainer = TrainerFactory.GetEventTrainer(trainParams, manifestInfoEntries);
+        //         nameFinderModel = trainer.Train(eventStream);
+        //     } // TODO: Maybe it is not a good idea, that these two don't use the context generator ?!
+        //     else
+// // These also don't use the sequence codec ?!
+        //     if (TrainerType.EVENT_MODEL_SEQUENCE_TRAINER.Equals(trainerType))
+        //     {
+        //         NameSampleSequenceStream ss = new NameSampleSequenceStream(samples, factory.CreateContextGenerator());
+        //         EventModelSequenceTrainer trainer = TrainerFactory.GetEventModelSequenceTrainer(trainParams, manifestInfoEntries);
+        //         nameFinderModel = trainer.Train(ss);
+        //     }
+        //     else if (TrainerType.SEQUENCE_TRAINER.Equals(trainerType))
+        //     {
+        //         SequenceTrainer trainer = TrainerFactory.GetSequenceModelTrainer(trainParams, manifestInfoEntries);
+        //         NameSampleSequenceStream ss = new NameSampleSequenceStream(samples, factory.CreateContextGenerator(), false);
+        //         seqModel = trainer.Train(ss);
+        //     }
+        //     else
+        //     {
+        //         throw new InvalidOperationException("Unexpected trainer type!");
+        //     }
+// 
+        //     if (seqModel != null)
+        //     {
+        //         return new TokenNameFinderModel(languageCode, seqModel, factory.GetFeatureGenerator(), factory.GetResources(), manifestInfoEntries, factory.GetSequenceCodec(), factory);
+        //     }
+        //     else
+        //     {
+        //         return new TokenNameFinderModel(languageCode, nameFinderModel, beamSize, factory.GetFeatureGenerator(), factory.GetResources(), manifestInfoEntries, factory.GetSequenceCodec(), factory);
+        //     }
+        // }
 
         /// <summary>
         /// Gets the name type from the outcome
@@ -261,16 +261,19 @@ namespace Opennlp.Tools.Namefind
             IList<Span> sortedSpans = new List<Span>(spans.Length);
             sortedSpans.AddRange(spans);
             sortedSpans.Sort();
-            using IEnumerator<Span> it = sortedSpans.GetEnumerator();
+            // LUCENENET: upstream uses Iterator.remove() to delete from the backing
+            // list mid-traversal, which .NET enumerators do not support. An index-based
+            // loop that steps back on removal preserves the same semantics.
             Span lastSpan = null;
-            while (it.MoveNext())
+            for (int i = 0; i < sortedSpans.Count; i++)
             {
-                Span span = it.Current;
+                Span span = sortedSpans[i];
                 if (lastSpan != null)
                 {
                     if (lastSpan.Intersects(span))
                     {
-                        it.Remove();
+                        sortedSpans.RemoveAt(i);
+                        i--;
                         span = lastSpan;
                     }
                 }

@@ -21,7 +21,7 @@ using J2N.Text;
 
 namespace Opennlp.Tools.Ml.Model
 {
-    public abstract class AbstractModelReader
+    internal abstract class AbstractModelReader
     {
         /// <summary>
         /// The number of predicates contained in the model.
@@ -34,7 +34,7 @@ namespace Opennlp.Tools.Ml.Model
             Stream input;
 
             // handle the zipped/not zipped distinction
-            if (filename.EndsWith(".gz"))
+            if (filename.EndsWith(".gz", StringComparison.Ordinal))
             {
                 input = new GZipStream(f.OpenRead(), CompressionMode.Decompress);
                 filename = filename.Substring(0, filename.Length - 3);
@@ -46,7 +46,7 @@ namespace Opennlp.Tools.Ml.Model
 
 
             // handle the different formats
-            if (filename.EndsWith(".bin"))
+            if (filename.EndsWith(".bin", StringComparison.Ordinal))
             {
                 this.dataReader = new BinaryFileDataReader(input);
             }
@@ -107,7 +107,7 @@ namespace Opennlp.Tools.Ml.Model
         protected virtual int[][] GetOutcomePatterns()
         {
             int numOCTypes = ReadInt();
-            int[][] outcomePatterns = new int[][numOCTypes];
+            int[][] outcomePatterns = new int[numOCTypes][];
             for (int i = 0; i < numOCTypes; i++)
             {
                 StringTokenizer tok = new StringTokenizer(ReadUTF(), " ");

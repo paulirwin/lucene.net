@@ -26,11 +26,67 @@ namespace Opennlp.Tools.Util.Ext
     /// <p>
     /// <b>Note:</b> Do not use this class, internal use only!
     /// </summary>
-    public class ExtensionLoader
+    internal class ExtensionLoader
     {
         private static bool isOsgiAvailable = false;
         private ExtensionLoader()
         {
+        }
+
+        /// <summary>
+        /// LUCENENET: Resolves a type name that may be a Java class name.
+        /// <para/>
+        /// Serialized OpenNLP models record their tool factory as a Java class name
+        /// (for example <c>opennlp.tools.sentdetect.SentenceDetectorFactory</c>).
+        /// <see cref="Type.GetType(string)"/> cannot resolve those, so the Java name is
+        /// translated to the corresponding ported type by title-casing each segment
+        /// and searching this assembly.
+        /// </summary>
+        internal static Type ResolveType(string className)
+        {
+            if (className is null)
+            {
+                return null;
+            }
+
+            Type type = Type.GetType(className);
+            if (type != null)
+            {
+                return type;
+            }
+
+            // Translate a Java package/class name to the ported namespace, e.g.
+            // "opennlp.tools.sentdetect.SentenceDetectorFactory" ->
+            // "Opennlp.Tools.Sentdetect.SentenceDetectorFactory".
+            string[] parts = className.Split('.');
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (parts[i].Length > 0 && char.IsLower(parts[i][0]))
+                {
+                    parts[i] = char.ToUpperInvariant(parts[i][0]) + parts[i].Substring(1);
+                }
+            }
+
+            string portedName = string.Join(".", parts);
+
+            type = typeof(ExtensionLoader).Assembly.GetType(portedName, throwOnError: false);
+            if (type != null)
+            {
+                return type;
+            }
+
+            // Fall back to matching on the simple type name, which covers cases where
+            // the Java package does not line up with the ported namespace.
+            string simpleName = parts[parts.Length - 1];
+            foreach (Type candidate in typeof(ExtensionLoader).Assembly.GetTypes())
+            {
+                if (string.Equals(candidate.Name, simpleName, StringComparison.Ordinal))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
         }
 
         internal static bool IsOSGiAvailable()
@@ -64,7 +120,7 @@ namespace Opennlp.Tools.Util.Ext
             // First try to load extension and instantiate extension from class path
             try
             {
-                var extClazz = Type.GetType(extensionClassName);
+                var extClazz = ResolveType(extensionClassName);
                 if (typeof(T).IsAssignableFrom(extClazz))
                 {
                     try

@@ -22,7 +22,7 @@ namespace Opennlp.Tools.Namefind
     /// <summary>
     /// The interface for name finders which provide name tags for a sequence of tokens.
     /// </summary>
-    public interface TokenNameFinder
+    internal interface TokenNameFinder
     {
         /// <summary>
         /// Generates name tags for the given sequence, typically a sentence,

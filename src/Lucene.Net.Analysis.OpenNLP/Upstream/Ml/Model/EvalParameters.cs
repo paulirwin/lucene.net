@@ -24,7 +24,7 @@ namespace Opennlp.Tools.Ml.Model
     /// This class encapsulates the varibales used in producing probabilities from a model
     /// and facilitaes passing these variables to the eval method.
     /// </summary>
-    public class EvalParameters
+    internal class EvalParameters
     {
         /// <summary>
         /// Mapping between outcomes and parameter values for each context.

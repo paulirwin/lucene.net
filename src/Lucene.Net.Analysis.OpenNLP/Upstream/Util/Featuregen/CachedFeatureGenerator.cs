@@ -24,7 +24,7 @@ namespace Opennlp.Tools.Util.Featuregen
     /// <summary>
     /// Caches features of the aggregated {@link AdaptiveFeatureGenerator}s.
     /// </summary>
-    public class CachedFeatureGenerator : AdaptiveFeatureGenerator
+    internal class CachedFeatureGenerator : AdaptiveFeatureGenerator
     {
         private readonly AdaptiveFeatureGenerator generator;
         private string[] prevTokens;

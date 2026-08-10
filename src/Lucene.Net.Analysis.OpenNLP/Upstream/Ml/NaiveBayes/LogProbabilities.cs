@@ -28,7 +28,7 @@ namespace Opennlp.Tools.Ml.Naivebayes
     /// representation of very low probabilities such as would occur in a text categorizer.
     /// </summary>
     /// <param name="<T>">the label (category) class</param>
-    public class LogProbabilities<T> : Probabilities<T>
+    internal class LogProbabilities<T> : Probabilities<T>
     {
         /// <summary>
         /// Assigns a probability to a label, discarding any previously assigned probability.
@@ -61,7 +61,8 @@ namespace Opennlp.Tools.Ml.Naivebayes
         public virtual void SetIfLarger(T t, double probability)
         {
             double logProbability = Log(probability);
-            double? p = map[t];
+            // LUCENENET: Java Map.get() returns null for an absent key.
+            map.TryGetValue(t, out double? p);
             if (p == null || logProbability > p)
             {
                 isNormalised = false;
@@ -89,7 +90,8 @@ namespace Opennlp.Tools.Ml.Naivebayes
         public virtual void AddIn(T t, double probability, int count)
         {
             isNormalised = false;
-            double? p = map[t];
+            // LUCENENET: Java Map.get() returns null for an absent key.
+            map.TryGetValue(t, out double? p);
             if (p == null)
                 p = 0;
             probability = Log(probability) * count;
@@ -167,7 +169,8 @@ namespace Opennlp.Tools.Ml.Naivebayes
         /// <returns>the log probability associated with the label</returns>
         public virtual double? GetLog(T t)
         {
-            double? d = map[t];
+            // LUCENENET: Java Map.get() returns null for an absent key.
+            map.TryGetValue(t, out double? d);
             if (d == null)
                 return double.NegativeInfinity;
             return d;

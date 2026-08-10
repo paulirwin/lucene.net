@@ -1,6 +1,6 @@
 // Lucene version compatibility level 8.2.0
 using Lucene.Net.Support.Threading;
-using opennlp.tools.postag;
+using Opennlp.Tools.Postag;
 
 namespace Lucene.Net.Analysis.OpenNlp.Tools
 {
@@ -39,7 +39,7 @@ namespace Lucene.Net.Analysis.OpenNlp.Tools
             UninterruptableMonitor.Enter(this);
             try
             {
-                return tagger.tag(words);
+                return tagger.Tag(words);
             }
             finally
             {

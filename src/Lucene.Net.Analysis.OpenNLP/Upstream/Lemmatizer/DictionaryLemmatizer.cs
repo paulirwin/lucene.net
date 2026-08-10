@@ -29,12 +29,16 @@ namespace Opennlp.Tools.Lemmatizer
     /// containing, for each line, word\tabpostag\tablemma.
     /// </summary>
     /// <remarks>@version2014-07-08</remarks>
-    public class DictionaryLemmatizer : Lemmatizer
+    internal class DictionaryLemmatizer : Lemmatizer
     {
         /// <summary>
         /// The hashmap containing the dictionary.
         /// </summary>
-        private readonly Dictionary<IList<string>, IList<string>> dictMap = new Dictionary<IList<string>, IList<string>>();
+        // LUCENENET: Java's HashMap keys on List.equals/hashCode (value equality), while
+        // a .NET Dictionary would use reference equality for IList<string> keys and never
+        // find a match. J2N's ListEqualityComparer restores the Java semantics.
+        private readonly Dictionary<IList<string>, IList<string>> dictMap =
+            new Dictionary<IList<string>, IList<string>>(J2N.Collections.Generic.ListEqualityComparer<string>.Default);
         /// <summary>
         /// Construct a hashmap from the input tab separated dictionary.
         ///
@@ -66,8 +70,8 @@ namespace Opennlp.Tools.Lemmatizer
             using var breader = new StreamReader(dictionary);
             while (breader.ReadLine() is { } line)
             {
-                string[] elems = line.Split("\t");
-                string[] lemmas = elems[2].Split("#");
+                string[] elems = line.Split('\t');
+                string[] lemmas = elems[2].Split('#');
                 this.dictMap.Put(new List<string> { elems[0], elems[1] }, lemmas);
             }
         }
@@ -132,7 +136,7 @@ namespace Opennlp.Tools.Lemmatizer
             IList<string> keys = this.GetDictKeys(word, postag);
 
             // lookup lemma as value of the map
-            IList<string> keyValues = this.dictMap[keys];
+            this.dictMap.TryGetValue(keys, out IList<string> keyValues);
             if (keyValues != null && keyValues.Count > 0)
             {
                 lemma = keyValues[0];
@@ -160,7 +164,7 @@ namespace Opennlp.Tools.Lemmatizer
             IList<string> keys = this.GetDictKeys(word, postag);
 
             // lookup lemma as value of the map
-            IList<string> keyValues = this.dictMap[keys];
+            this.dictMap.TryGetValue(keys, out IList<string> keyValues);
             if (keyValues != null && keyValues.Count > 0)
             {
                 lemmasList.AddRange(keyValues);

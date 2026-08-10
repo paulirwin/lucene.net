@@ -24,7 +24,7 @@ namespace Opennlp.Tools.Util.Featuregen
     /// <summary>
     /// </summary>
     /// <remarks>@seeCachedFeatureGenerator</remarks>
-    public class CachedFeatureGeneratorFactory : GeneratorFactory.AbstractXmlFeatureGeneratorFactory, GeneratorFactory.XmlFeatureGeneratorFactory
+    internal class CachedFeatureGeneratorFactory : GeneratorFactory.AbstractXmlFeatureGeneratorFactory, GeneratorFactory.XmlFeatureGeneratorFactory
     {
         public CachedFeatureGeneratorFactory() : base()
         {

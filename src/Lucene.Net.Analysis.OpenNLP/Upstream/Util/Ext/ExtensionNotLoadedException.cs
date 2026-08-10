@@ -21,7 +21,7 @@ namespace Opennlp.Tools.Util.Ext
     /// <summary>
     /// Exception indicates that an OpenNLP extension could not be loaded.
     /// </summary>
-    public class ExtensionNotLoadedException : Exception
+    internal class ExtensionNotLoadedException : Exception
     {
         private readonly bool isOSGiEnvironment;
         public ExtensionNotLoadedException(string message) : base(message)

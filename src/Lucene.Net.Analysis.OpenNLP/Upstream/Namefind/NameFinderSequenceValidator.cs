@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using System;
 using Opennlp.Tools.Util;
 
 namespace Opennlp.Tools.Namefind
@@ -21,25 +22,25 @@ namespace Opennlp.Tools.Namefind
     /// <summary>
     /// This class is created by the {@link BioCodec}.
     /// </summary>
-    public class NameFinderSequenceValidator : SequenceValidator<string>
+    internal class NameFinderSequenceValidator : SequenceValidator<string>
     {
         public virtual bool ValidSequence(int i, string[] inputSequence, string[] outcomesSequence, string outcome)
         {
 
             // outcome is formatted like "cont" or "sometype-cont", so we
             // can check if it ends with "cont".
-            if (outcome.EndsWith(BioCodec.CONTINUE))
+            if (outcome.EndsWith(BioCodec.CONTINUE, StringComparison.Ordinal))
             {
                 int li = outcomesSequence.Length - 1;
                 if (li == -1)
                 {
                     return false;
                 }
-                else if (outcomesSequence[li].EndsWith(BioCodec.OTHER))
+                else if (outcomesSequence[li].EndsWith(BioCodec.OTHER, StringComparison.Ordinal))
                 {
                     return false;
                 }
-                else if (outcomesSequence[li].EndsWith(BioCodec.CONTINUE) || outcomesSequence[li].EndsWith(BioCodec.START))
+                else if (outcomesSequence[li].EndsWith(BioCodec.CONTINUE, StringComparison.Ordinal) || outcomesSequence[li].EndsWith(BioCodec.START, StringComparison.Ordinal))
                 {
 
                     // if it is continue or start, we have to check if previous match was of the same type

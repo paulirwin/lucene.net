@@ -21,7 +21,7 @@ namespace Opennlp.Tools.Ml.Naivebayes
     /// <summary>
     /// Parameters for the evalution of a naive bayes classifier
     /// </summary>
-    public class NaiveBayesEvalParameters : EvalParameters
+    internal class NaiveBayesEvalParameters : EvalParameters
     {
         protected double[] outcomeTotals;
         protected long vocabulary;

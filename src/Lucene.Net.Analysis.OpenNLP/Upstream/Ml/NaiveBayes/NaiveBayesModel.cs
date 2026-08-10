@@ -25,7 +25,7 @@ namespace Opennlp.Tools.Ml.Naivebayes
     /// <summary>
     /// Class implementing the multinomial Naive Bayes classifier model.
     /// </summary>
-    public class NaiveBayesModel : AbstractModel
+    internal class NaiveBayesModel : AbstractModel
     {
         protected double[] outcomeTotals;
         protected long vocabulary;
@@ -81,7 +81,9 @@ namespace Opennlp.Tools.Ml.Naivebayes
             Arrays.Fill(outsums, 0);
             for (int i = 0; i < context.Length; i++)
             {
-                scontexts[i] = pmap[context[i]];
+                // LUCENENET: Java's Map.get() returns null for an absent key; the .NET indexer throws.
+                pmap.TryGetValue(context[i], out Context ctx);
+                scontexts[i] = ctx;
             }
 
             return Eval(scontexts, values, outsums, evalParams, true);

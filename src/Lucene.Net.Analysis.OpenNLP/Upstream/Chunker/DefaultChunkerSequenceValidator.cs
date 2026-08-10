@@ -14,15 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+using System;
 using Opennlp.Tools.Util;
 
 namespace Opennlp.Tools.Chunker
 {
-    public class DefaultChunkerSequenceValidator : SequenceValidator<TokenTag>
+    internal class DefaultChunkerSequenceValidator : SequenceValidator<TokenTag>
     {
         private bool ValidOutcome(string outcome, string prevOutcome)
         {
-            if (outcome.StartsWith("I-"))
+            if (outcome.StartsWith("I-", StringComparison.Ordinal))
             {
                 if (prevOutcome == null)
                 {

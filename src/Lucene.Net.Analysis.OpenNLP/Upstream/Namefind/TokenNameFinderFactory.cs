@@ -30,7 +30,7 @@ namespace Opennlp.Tools.Namefind
     // Idea of this factory is that most resources/impls used by the name finder
     // can be modified through this class!
     // That only works if that's the central class used for training/runtime
-    public class TokenNameFinderFactory : BaseToolFactory
+    internal class TokenNameFinderFactory : BaseToolFactory
     {
         private byte[] featureGeneratorBytes;
         private Dictionary<string, object> resources;
@@ -84,7 +84,7 @@ namespace Opennlp.Tools.Namefind
             return bytes.ToArray();
         }
 
-        protected virtual SequenceCodec<string> GetSequenceCodec()
+        public virtual SequenceCodec<string> GetSequenceCodec()
         {
             return seqCodec;
         }

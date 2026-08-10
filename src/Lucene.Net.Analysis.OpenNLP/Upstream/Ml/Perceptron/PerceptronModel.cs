@@ -21,7 +21,7 @@ using Lucene.Net.Support;
 
 namespace Opennlp.Tools.Ml.Perceptron
 {
-    public class PerceptronModel : AbstractModel
+    internal class PerceptronModel : AbstractModel
     {
         public PerceptronModel(Context[] @params, String[] predLabels, String[] outcomeNames) : base(@params, predLabels, outcomeNames)
         {
@@ -49,7 +49,9 @@ namespace Opennlp.Tools.Ml.Perceptron
             Arrays.Fill(outsums, 0);
             for (int i = 0; i < context.Length; i++)
             {
-                scontexts[i] = pmap[context[i]];
+                // LUCENENET: Java's Map.get() returns null for an absent key; the .NET indexer throws.
+                pmap.TryGetValue(context[i], out Context ctx);
+                scontexts[i] = ctx;
             }
 
             return Eval(scontexts, values, outsums, evalParams, true);

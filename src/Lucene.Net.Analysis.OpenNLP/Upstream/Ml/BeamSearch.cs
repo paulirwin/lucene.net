@@ -25,7 +25,7 @@ using J2N.Collections.Generic;
 namespace Opennlp.Tools.Ml
 {
     // LUCENENET specific non-generic base class for constants
-    public abstract class BeamSearch
+    internal abstract class BeamSearch
     {
         public static readonly string BEAM_SIZE_PARAMETER = "BeamSize";
     }
@@ -39,7 +39,7 @@ namespace Opennlp.Tools.Ml
     /// @seeSequenceValidator
     /// @seeBeamSearchContextGenerator
     /// </remarks>
-    public class BeamSearch<T> : BeamSearch, SequenceClassificationModel<T>
+    internal class BeamSearch<T> : BeamSearch, SequenceClassificationModel<T>
     {
         private static readonly object[] EMPTY_ADDITIONAL_CONTEXT = new object[0];
         protected int size;

@@ -26,7 +26,7 @@ namespace Opennlp.Tools.Chunker
     /// <summary>
     /// The interface for chunkers which provide chunk tags for a sequence of tokens.
     /// </summary>
-    public interface Chunker
+    internal interface Chunker
     {
         /// <summary>
         /// Generates chunk tags for the given sequence returning the result in an array.

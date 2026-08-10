@@ -33,7 +33,7 @@ namespace Opennlp.Tools.Util
     ///      {@link #createArtifactSerializersMap()} methods if necessary.
     /// </ul>
     /// </summary>
-    public abstract class BaseToolFactory
+    internal abstract class BaseToolFactory
     {
         protected ArtifactProvider artifactProvider;
         /// <summary>

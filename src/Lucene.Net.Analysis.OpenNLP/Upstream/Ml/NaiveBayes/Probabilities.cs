@@ -26,7 +26,7 @@ namespace Opennlp.Tools.Ml.Naivebayes
     /// Class implementing the probability distribution over labels returned by a classifier.
     /// </summary>
     /// <param name="<T>">the label (category) class</param>
-    public abstract class Probabilities<T>
+    internal abstract class Probabilities<T>
     {
         protected Dictionary<T, double?> map = new Dictionary<T, double?>();
         protected bool isNormalised = false;
@@ -62,7 +62,8 @@ namespace Opennlp.Tools.Ml.Naivebayes
         /// <param name="probability">the probability to assign</param>
         public virtual void SetIfLarger(T t, double probability)
         {
-            double? p = map[t];
+            // LUCENENET: Java Map.get() returns null for an absent key.
+            map.TryGetValue(t, out double? p);
             if (p == null || probability > p)
             {
                 isNormalised = false;
@@ -89,7 +90,8 @@ namespace Opennlp.Tools.Ml.Naivebayes
         public virtual void AddIn(T t, double probability, int count)
         {
             isNormalised = false;
-            double? p = map[t];
+            // LUCENENET: Java Map.get() returns null for an absent key.
+            map.TryGetValue(t, out double? p);
             if (p == null)
                 p = 1;
             probability = Math.Pow(probability, count);
@@ -125,7 +127,8 @@ namespace Opennlp.Tools.Ml.Naivebayes
         /// <returns>the HashMap of labels and their probabilities</returns>
         public virtual HashSet<T> GetKeys()
         {
-            return map.Keys.ToHashSet();
+            // LUCENENET: Enumerable.ToHashSet is netstandard2.1+.
+            return new HashSet<T>(map.Keys);
         }
 
         /// <summary>

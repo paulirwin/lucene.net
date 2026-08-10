@@ -22,7 +22,7 @@ namespace Opennlp.Tools.Chunker
     /// <summary>
     /// Interface for the context generator used in syntactic chunking.
     /// </summary>
-    public interface ChunkerContextGenerator : BeamSearchContextGenerator<TokenTag>
+    internal interface ChunkerContextGenerator : BeamSearchContextGenerator<TokenTag>
     {
         /// <summary>
         /// Returns the contexts for chunking of the specified index.

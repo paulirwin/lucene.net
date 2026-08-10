@@ -36,17 +36,17 @@ namespace Opennlp.Tools.Lemmatizer
     {
         private static readonly string COMPONENT_NAME = "StatisticalLemmatizer";
         private static readonly string LEMMATIZER_MODEL_ENTRY_NAME = "lemmatizer.model";
-        public LemmatizerModel(string languageCode, SequenceClassificationModel<string> lemmatizerModel, Dictionary<string, string> manifestInfoEntries, LemmatizerFactory factory) : base(COMPONENT_NAME, languageCode, manifestInfoEntries, factory)
+        internal LemmatizerModel(string languageCode, SequenceClassificationModel<string> lemmatizerModel, Dictionary<string, string> manifestInfoEntries, LemmatizerFactory factory) : base(COMPONENT_NAME, languageCode, manifestInfoEntries, factory)
         {
             artifactMap.Put(LEMMATIZER_MODEL_ENTRY_NAME, lemmatizerModel);
             CheckArtifactMap();
         }
 
-        public LemmatizerModel(string languageCode, MaxentModel lemmatizerModel, Dictionary<string, string> manifestInfoEntries, LemmatizerFactory factory) : this(languageCode, lemmatizerModel, LemmatizerME.DEFAULT_BEAM_SIZE, manifestInfoEntries, factory)
+        internal LemmatizerModel(string languageCode, MaxentModel lemmatizerModel, Dictionary<string, string> manifestInfoEntries, LemmatizerFactory factory) : this(languageCode, lemmatizerModel, LemmatizerME.DEFAULT_BEAM_SIZE, manifestInfoEntries, factory)
         {
         }
 
-        public LemmatizerModel(string languageCode, MaxentModel lemmatizerModel, int beamSize, Dictionary<string, string> manifestInfoEntries, LemmatizerFactory factory) : base(COMPONENT_NAME, languageCode, manifestInfoEntries, factory)
+        internal LemmatizerModel(string languageCode, MaxentModel lemmatizerModel, int beamSize, Dictionary<string, string> manifestInfoEntries, LemmatizerFactory factory) : base(COMPONENT_NAME, languageCode, manifestInfoEntries, factory)
         {
             artifactMap.Put(LEMMATIZER_MODEL_ENTRY_NAME, lemmatizerModel);
             Properties manifest = (Properties)artifactMap[MANIFEST_ENTRY];
@@ -54,7 +54,7 @@ namespace Opennlp.Tools.Lemmatizer
             CheckArtifactMap();
         }
 
-        public LemmatizerModel(string languageCode, MaxentModel lemmatizerModel, LemmatizerFactory factory) : this(languageCode, lemmatizerModel, null, factory)
+        internal LemmatizerModel(string languageCode, MaxentModel lemmatizerModel, LemmatizerFactory factory) : this(languageCode, lemmatizerModel, null, factory)
         {
         }
 
@@ -83,7 +83,7 @@ namespace Opennlp.Tools.Lemmatizer
             }
         }
 
-        public virtual SequenceClassificationModel<string> GetLemmatizerSequenceModel()
+        internal virtual SequenceClassificationModel<string> GetLemmatizerSequenceModel()
         {
             Properties manifest = (Properties)artifactMap[MANIFEST_ENTRY];
             if (artifactMap[LEMMATIZER_MODEL_ENTRY_NAME] is MaxentModel)
@@ -112,7 +112,7 @@ namespace Opennlp.Tools.Lemmatizer
             return typeof(LemmatizerFactory);
         }
 
-        public virtual LemmatizerFactory GetFactory()
+        internal virtual LemmatizerFactory GetFactory()
         {
             return (LemmatizerFactory)this.toolFactory;
         }

@@ -22,7 +22,7 @@ namespace Opennlp.Tools.Util.Featuregen
     /// <summary>
     /// Generates a feature which contains the token itself.
     /// </summary>
-    public class TokenFeatureGenerator : AdaptiveFeatureGenerator
+    internal class TokenFeatureGenerator : AdaptiveFeatureGenerator
     {
         private static readonly string WORD_PREFIX = "w";
         private bool lowercase;
@@ -45,6 +45,17 @@ namespace Opennlp.Tools.Util.Featuregen
             {
                 features.Add(WORD_PREFIX + "=" + tokens[index]);
             }
+        }
+
+        // LUCENENET: AdaptiveFeatureGenerator declares these as Java 8 default
+        // methods; C# default interface implementations are unavailable on
+        // netstandard2.0/net462, so the empty bodies are supplied here.
+        public virtual void UpdateAdaptiveData(string[] tokens, string[] outcomes)
+        {
+        }
+
+        public virtual void ClearAdaptiveData()
+        {
         }
     }
 }

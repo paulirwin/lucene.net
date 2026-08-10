@@ -31,7 +31,7 @@ namespace Opennlp.Tools.Lemmatizer
     /// for Lexical Functional Grammar Parsing. PhD dissertation, Dublin City University.
     /// http://grzegorz.chrupala.me/papers/phd-single.pdf
     /// </summary>
-    public class LemmatizerME : Lemmatizer
+    internal class LemmatizerME : Lemmatizer
     {
         public static readonly int LEMMA_NUMBER = 29;
         public static readonly int DEFAULT_BEAM_SIZE = 3;
@@ -112,7 +112,7 @@ namespace Opennlp.Tools.Lemmatizer
         public virtual string[][] PredictLemmas(int numLemmas, string[] toks, string[] tags)
         {
             Sequence[] bestSequences = model.BestSequences(numLemmas, toks, new object[] { tags }, contextGenerator, sequenceValidator);
-            string[][] allLemmas = new string[][bestSequences.Length];
+            string[][] allLemmas = new string[bestSequences.Length][];
             for (int i = 0; i < allLemmas.Length; i++)
             {
                 IList<string> ses = bestSequences[i].GetOutcomes();

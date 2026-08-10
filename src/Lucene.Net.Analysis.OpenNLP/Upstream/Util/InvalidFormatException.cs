@@ -21,7 +21,7 @@ namespace Opennlp.Tools.Util
     /// <summary>
     /// This exception indicates that a resource violates the expected data format.
     /// </summary>
-    public class InvalidFormatException : Exception
+    internal class InvalidFormatException : Exception
     {
         public InvalidFormatException()
         {

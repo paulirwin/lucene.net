@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
@@ -25,7 +26,7 @@ namespace Opennlp.Tools.Util.Featuregen
     /// <summary>
     /// </summary>
     /// <remarks>@seeAggregatedFeatureGenerator</remarks>
-    public class AggregatedFeatureGeneratorFactory : GeneratorFactory.AbstractXmlFeatureGeneratorFactory, GeneratorFactory.XmlFeatureGeneratorFactory
+    internal class AggregatedFeatureGeneratorFactory : GeneratorFactory.AbstractXmlFeatureGeneratorFactory, GeneratorFactory.XmlFeatureGeneratorFactory
     {
         public AggregatedFeatureGeneratorFactory() : base()
         {
@@ -58,7 +59,7 @@ namespace Opennlp.Tools.Util.Featuregen
             IList<AdaptiveFeatureGenerator> aggregatedGenerators = new List<AdaptiveFeatureGenerator>();
             foreach (KeyValuePair<string, object> arg in args)
             {
-                if (arg.Key.StartsWith("generator#"))
+                if (arg.Key.StartsWith("generator#", StringComparison.Ordinal))
                 {
                     aggregatedGenerators.Add((AdaptiveFeatureGenerator)arg.Value);
                 }

@@ -15,18 +15,19 @@
  * limitations under the License.
  */
 
+using System;
 using System.IO;
 using System.IO.Compression;
 using J2N.IO;
 
 namespace Opennlp.Tools.Ml.Model
 {
-    public class BinaryFileDataReader : DataReader
+    internal class BinaryFileDataReader : DataReader
     {
         private DataInputStream input;
         public BinaryFileDataReader(FileInfo f)
         {
-            if (f.Name.EndsWith(".gz"))
+            if (f.Name.EndsWith(".gz", StringComparison.Ordinal))
             {
                 input = new DataInputStream(new GZipStream(f.OpenRead(), CompressionMode.Decompress, leaveOpen: true));
             }

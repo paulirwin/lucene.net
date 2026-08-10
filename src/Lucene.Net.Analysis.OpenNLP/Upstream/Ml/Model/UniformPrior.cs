@@ -22,7 +22,7 @@ namespace Opennlp.Tools.Ml.Model
     /// <summary>
     /// Provide a maximum entropy model with a uniform prior.
     /// </summary>
-    public class UniformPrior : Prior
+    internal class UniformPrior : Prior
     {
         private int numOutcomes;
         private double r;
@@ -47,15 +47,17 @@ namespace Opennlp.Tools.Ml.Model
         public virtual void SetLabels(string[] outcomeLabels, string[] contextLabels)
         {
             this.numOutcomes = outcomeLabels.Length;
-            r = Math.Log(1 / numOutcomes);
+            // LUCENENET: 1.0 (not 1) is required here; integer division would yield 0,
+            // making r negative infinity and every probability NaN.
+            r = Math.Log(1.0 / numOutcomes);
         }
 
-        public virtual int GetHashCode()
+        public override int GetHashCode()
         {
             return HashCode.Combine(numOutcomes, r);
         }
 
-        public virtual bool Equals(object obj)
+        public override bool Equals(object obj)
         {
             if (obj == this)
             {

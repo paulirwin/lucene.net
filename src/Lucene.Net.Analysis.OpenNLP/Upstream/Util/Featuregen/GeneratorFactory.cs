@@ -76,7 +76,7 @@ namespace Opennlp.Tools.Util.Featuregen
     /// created generators are added to a new instance of the
     /// {@link AggregatedFeatureGenerator} which is then returned.
     /// </summary>
-    public class GeneratorFactory
+    internal class GeneratorFactory
     {
         /// <summary>
         /// The {@link XmlFeatureGeneratorFactory} is responsible to construct
@@ -96,7 +96,7 @@ namespace Opennlp.Tools.Util.Featuregen
             AdaptiveFeatureGenerator Create(XmlElement generatorElement, FeatureGeneratorResourceProvider resourceManager);
         }
 
-        public abstract class AbstractXmlFeatureGeneratorFactory
+        internal abstract class AbstractXmlFeatureGeneratorFactory
         {
             protected XmlElement generatorElement;
             protected FeatureGeneratorResourceProvider resourceManager;
@@ -107,7 +107,7 @@ namespace Opennlp.Tools.Util.Featuregen
                 args = new LinkedDictionary<string, object>();
             }
 
-            public virtual JCG.Dictionary<string, ArtifactSerializer<T>> GetArtifactSerializerMapping<T>()
+            public virtual JCG.Dictionary<string, ArtifactSerializer> GetArtifactSerializerMapping()
             {
                 return null;
             }
@@ -175,7 +175,7 @@ namespace Opennlp.Tools.Util.Featuregen
 
             public virtual int GetInt(string name)
             {
-                object value = args[name];
+                args.TryGetValue(name, out object value);
                 if (value == null)
                 {
                     throw new InvalidFormatException("parameter " + name + " must be set!");
@@ -192,7 +192,7 @@ namespace Opennlp.Tools.Util.Featuregen
 
             public virtual int GetInt(string name, int defValue)
             {
-                object value = args[name];
+                args.TryGetValue(name, out object value);
                 if (value == null)
                 {
                     return defValue;
@@ -209,7 +209,7 @@ namespace Opennlp.Tools.Util.Featuregen
 
             public virtual long GetLong(string name)
             {
-                object value = args[name];
+                args.TryGetValue(name, out object value);
                 if (value == null)
                 {
                     throw new InvalidFormatException("parameter " + name + " must be set!");
@@ -226,7 +226,7 @@ namespace Opennlp.Tools.Util.Featuregen
 
             public virtual long GetLong(string name, long defValue)
             {
-                object value = args[name];
+                args.TryGetValue(name, out object value);
                 if (value == null)
                 {
                     return defValue;
@@ -243,7 +243,7 @@ namespace Opennlp.Tools.Util.Featuregen
 
             public virtual float GetFloat(string name)
             {
-                object value = args[name];
+                args.TryGetValue(name, out object value);
                 if (value == null)
                 {
                     throw new InvalidFormatException("parameter " + name + " must be set!");
@@ -260,7 +260,7 @@ namespace Opennlp.Tools.Util.Featuregen
 
             public virtual float GetFloat(string name, float defValue)
             {
-                object value = args[name];
+                args.TryGetValue(name, out object value);
                 if (value == null)
                 {
                     return defValue;
@@ -277,7 +277,7 @@ namespace Opennlp.Tools.Util.Featuregen
 
             public virtual double GetDouble(string name)
             {
-                object value = args[name];
+                args.TryGetValue(name, out object value);
                 if (value == null)
                 {
                     throw new InvalidFormatException("parameter " + name + " must be set!");
@@ -294,7 +294,7 @@ namespace Opennlp.Tools.Util.Featuregen
 
             public virtual double GetDouble(string name, double defValue)
             {
-                object value = args[name];
+                args.TryGetValue(name, out object value);
                 if (value == null)
                 {
                     return defValue;
@@ -311,7 +311,7 @@ namespace Opennlp.Tools.Util.Featuregen
 
             public virtual string GetStr(string name)
             {
-                object value = args[name];
+                args.TryGetValue(name, out object value);
                 if (value == null)
                 {
                     throw new InvalidFormatException("parameter " + name + " must be set!");
@@ -328,7 +328,7 @@ namespace Opennlp.Tools.Util.Featuregen
 
             public virtual string GetStr(string name, string defValue)
             {
-                object value = args[name];
+                args.TryGetValue(name, out object value);
                 if (value == null)
                 {
                     return defValue;
@@ -345,7 +345,7 @@ namespace Opennlp.Tools.Util.Featuregen
 
             public virtual bool GetBool(string name)
             {
-                object value = args[name];
+                args.TryGetValue(name, out object value);
                 if (value == null)
                 {
                     throw new InvalidFormatException("parameter " + name + " must be set!");
@@ -362,7 +362,7 @@ namespace Opennlp.Tools.Util.Featuregen
 
             public virtual bool GetBool(string name, bool defValue)
             {
-                object value = args[name];
+                args.TryGetValue(name, out object value);
                 if (value == null)
                 {
                     return defValue;
@@ -554,32 +554,42 @@ namespace Opennlp.Tools.Util.Featuregen
             }
             else
             {
-                // try
+                // LUCENENET: Type.GetType() returns null rather than throwing
+                // ClassNotFoundException, so we check for null explicitly.
+                Type factoryClass = ExtensionLoader.ResolveType(className);
+                if (factoryClass is null)
+                {
+                    throw new TypeLoadException("Could not load type: " + className);
+                }
+
+                try
+                {
+                    AbstractXmlFeatureGeneratorFactory factory = (AbstractXmlFeatureGeneratorFactory)Activator.CreateInstance(factoryClass);
+                    factory.Init(generatorElement, resourceManager);
+                    return factory.Create();
+                }
+                // catch (NoSuchMethodException e)
                 // {
-                    Type factoryClass = Type.GetType(className);
-                    try
-                    {
-                        AbstractXmlFeatureGeneratorFactory factory = (AbstractXmlFeatureGeneratorFactory)Activator.CreateInstance(factoryClass);
-                        factory.Init(generatorElement, resourceManager);
-                        return factory.Create();
-                    }
-                    // catch (NoSuchMethodException e)
-                    // {
-                    //     throw new Exception(e);
-                    // }
-                    // catch (InvocationTargetException e)
-                    // {
-                    //     throw new Exception(e);
-                    // }
-                    // catch (InstantiationException e)
-                    // {
-                    //     throw new Exception(e);
-                    // }
-                    // catch (IllegalAccessException e)
-                    // {
-                    //     throw new Exception(e);
-                    // }
+                //     throw new Exception(e);
                 // }
+                // catch (InvocationTargetException e)
+                // {
+                //     throw new Exception(e);
+                // }
+                // catch (InstantiationException e)
+                // {
+                //     throw new Exception(e);
+                // }
+                // catch (IllegalAccessException e)
+                // {
+                //     throw new Exception(e);
+                // }
+                // LUCENENET: the four reflection exceptions above all map to these
+                // in .NET, and upstream wraps each in a RuntimeException.
+                catch (Exception e) when (e.IsNoSuchMethodException() || e.IsInvocationTargetException() || e.IsInstantiationException() || e.IsIllegalAccessException())
+                {
+                    throw RuntimeException.Create(e);
+                }
                 // catch (ClassNotFoundException e)
                 // {
                 //     throw new Exception(e);
@@ -626,7 +636,7 @@ namespace Opennlp.Tools.Util.Featuregen
             return CreateGenerator(generatorElement, resourceManager);
         }
 
-        public static JCG.Dictionary<string, ArtifactSerializer<T>> ExtractArtifactSerializerMappings<T>(Stream xmlDescriptorIn)
+        public static JCG.Dictionary<string, ArtifactSerializer> ExtractArtifactSerializerMappings(Stream xmlDescriptorIn)
         {
             XmlDocument xmlDescriptorDOM = CreateDOM(xmlDescriptorIn);
             XmlElement element = xmlDescriptorDOM.DocumentElement;
@@ -635,7 +645,7 @@ namespace Opennlp.Tools.Util.Featuregen
             // check it is new format?
             if (elementName.Equals("featureGenerators"))
             {
-                JCG.Dictionary<string, ArtifactSerializer<T>> mapping = new JCG.Dictionary<string, ArtifactSerializer<T>>();
+                JCG.Dictionary<string, ArtifactSerializer> mapping = new JCG.Dictionary<string, ArtifactSerializer>();
                 XmlNodeList nodes = element.ChildNodes;
                 for (int i = 0; i < nodes.Count; i++)
                 {
@@ -644,7 +654,7 @@ namespace Opennlp.Tools.Util.Featuregen
                         XmlElement childElem = (XmlElement)nodes.Item(i);
                         if (childElem.Name.Equals("generator"))
                         {
-                            ExtractArtifactSerializerMappings<T>(mapping, childElem);
+                            ExtractArtifactSerializerMappings(mapping, childElem);
                         }
                     }
                 }
@@ -657,41 +667,52 @@ namespace Opennlp.Tools.Util.Featuregen
             }
         }
 
-        static void ExtractArtifactSerializerMappings<T>(JCG.Dictionary<string, ArtifactSerializer<T>> mapping, XmlElement element)
+        static void ExtractArtifactSerializerMappings(JCG.Dictionary<string, ArtifactSerializer> mapping, XmlElement element)
         {
             string className = element.GetAttribute("class");
             if (className != null)
             {
+                // LUCENENET: Type.GetType() returns null rather than throwing
+                // ClassNotFoundException, so we check for null explicitly.
+                Type factoryClass = ExtensionLoader.ResolveType(className);
+                if (factoryClass is null)
+                {
+                    throw new TypeLoadException("Could not load type: " + className);
+                }
+
                 try
                 {
-                    Type factoryClass = Type.GetType(className);
-                    try
-                    {
-                        AbstractXmlFeatureGeneratorFactory factory = (AbstractXmlFeatureGeneratorFactory)Activator.CreateInstance(factoryClass);
-                        factory.Init(element, null);
-                        JCG.Dictionary<string, ArtifactSerializer<T>> map = factory.GetArtifactSerializerMapping<T>();
-                        if (map != null)
-                            mapping.PutAll(map);
-                    }
-                    // catch (NoSuchMethodException e)
-                    // {
-                    //     throw;
-                    // }
-                    // catch (TargetInvocationException e)
-                    // {
-                    //     throw;
-                    // }
-                    // catch (InstantiationException e)
-                    // {
-                    //     throw;
-                    // }
-                    // catch (MethodAccessException e)
-                    // {
-                    //     throw;
-                    // }
-                    catch (InvalidFormatException ignored)
-                    {
-                    }
+                    AbstractXmlFeatureGeneratorFactory factory = (AbstractXmlFeatureGeneratorFactory)Activator.CreateInstance(factoryClass);
+                    factory.Init(element, null);
+                    JCG.Dictionary<string, ArtifactSerializer> map = factory.GetArtifactSerializerMapping();
+                    if (map != null)
+                        mapping.PutAll(map);
+                }
+                catch (InvalidFormatException)
+                {
+                    // LUCENENET: intentionally ignored, matching upstream
+                }
+                // catch (NoSuchMethodException e)
+                // {
+                //     throw;
+                // }
+                // catch (TargetInvocationException e)
+                // {
+                //     throw;
+                // }
+                // catch (InstantiationException e)
+                // {
+                //     throw;
+                // }
+                // catch (MethodAccessException e)
+                // {
+                //     throw;
+                // }
+                // LUCENENET: the four reflection exceptions above all map to these
+                // in .NET, and upstream wraps each in a RuntimeException.
+                catch (Exception e) when (e.IsNoSuchMethodException() || e.IsInvocationTargetException() || e.IsInstantiationException() || e.IsIllegalAccessException())
+                {
+                    throw RuntimeException.Create(e);
                 }
                 // catch (ClassNotFoundException e)
                 // {
@@ -713,9 +734,9 @@ namespace Opennlp.Tools.Util.Featuregen
             }
         }
 
-        static JCG.Dictionary<string, ArtifactSerializer<T>> ExtractArtifactSerializerMappingsClassicFormat<T>(XmlElement elem)
+        static JCG.Dictionary<string, ArtifactSerializer> ExtractArtifactSerializerMappingsClassicFormat(XmlElement elem)
         {
-            JCG.Dictionary<string, ArtifactSerializer<T>> mapping = new JCG.Dictionary<string, ArtifactSerializer<T>>();
+            JCG.Dictionary<string, ArtifactSerializer> mapping = new JCG.Dictionary<string, ArtifactSerializer>();
             //Xpath xPath = XPathFactory.NewInstance().NewXPath();
             XmlNodeList customElements;
             try
@@ -739,7 +760,7 @@ namespace Opennlp.Tools.Util.Featuregen
                     if (generator is ArtifactToSerializerMapper)
                     {
                         ArtifactToSerializerMapper mapper = (ArtifactToSerializerMapper)generator;
-                        mapping.PutAll(mapper.GetArtifactSerializerMapping<T>());
+                        mapping.PutAll(mapper.GetArtifactSerializerMapping());
                     }
                 }
             }
@@ -765,16 +786,16 @@ namespace Opennlp.Tools.Util.Featuregen
                         switch (xmlElement.Name)
                         {
                             case "wordcluster":
-                                mapping.Put(dictName, new WordClusterDictionarySerializer());
+                                mapping.Put(dictName, new WordClusterDictionary.WordClusterDictionarySerializer());
                                 break;
                             case "brownclustertoken":
-                                mapping.Put(dictName, new BrownClusterSerializer());
+                                mapping.Put(dictName, new BrownCluster.BrownClusterSerializer());
                                 break;
                             case "brownclustertokenclass":
-                                mapping.Put(dictName, new BrownClusterSerializer());
+                                mapping.Put(dictName, new BrownCluster.BrownClusterSerializer());
                                 break;
                             case "brownclusterbigram":
-                                mapping.Put(dictName, new BrownClusterSerializer());
+                                mapping.Put(dictName, new BrownCluster.BrownClusterSerializer());
                                 break;
                             case "dictionary":
                                 mapping.Put(dictName, new DictionarySerializer());

@@ -29,7 +29,7 @@ namespace Opennlp.Tools.Lemmatizer
     /// Dublin City University
     /// </summary>
     /// <remarks>@version2016-02-15</remarks>
-    public class DefaultLemmatizerContextGenerator : LemmatizerContextGenerator
+    internal class DefaultLemmatizerContextGenerator : LemmatizerContextGenerator
     {
         private static readonly int PREFIX_LENGTH = 5;
         private static readonly int SUFFIX_LENGTH = 7;
@@ -38,6 +38,14 @@ namespace Opennlp.Tools.Lemmatizer
         public DefaultLemmatizerContextGenerator()
         {
         }
+
+        /// <summary>
+        /// LUCENENET: Java renders a null reference as the literal "null" when it is
+        /// concatenated into a string, whereas .NET renders it as the empty string.
+        /// The feature names built below become model lookup keys, so they must match
+        /// what the trained (Java-produced) models expect.
+        /// </summary>
+        private static string ToJavaString(string value) => value ?? "null";
 
         protected static string[] GetPrefixes(string lex)
         {
@@ -84,7 +92,7 @@ namespace Opennlp.Tools.Lemmatizer
             }
             else
             {
-                p_1 = "p_1=" + preds[index - 1];
+                p_1 = "p_1=" + ToJavaString(preds[index - 1]);
             }
 
             w0 = "w0=" + toks[index];
@@ -100,13 +108,13 @@ namespace Opennlp.Tools.Lemmatizer
             string[] suffs = GetSuffixes(lex);
             for (int i = 0; i < suffs.Length; i++)
             {
-                features.Add("suf=" + suffs[i]);
+                features.Add("suf=" + ToJavaString(suffs[i]));
             }
 
             string[] prefs = GetPrefixes(lex);
             for (int i = 0; i < prefs.Length; i++)
             {
-                features.Add("pre=" + prefs[i]);
+                features.Add("pre=" + ToJavaString(prefs[i]));
             }
 
 

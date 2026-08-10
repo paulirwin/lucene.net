@@ -24,7 +24,7 @@ namespace Opennlp.Tools.Ml
     /// <summary>
     /// Utility class for simple vector arithmetic.
     /// </summary>
-    public class ArrayMath
+    internal class ArrayMath
     {
         public static double InnerProduct(double[] vecA, double[] vecB)
         {

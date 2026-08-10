@@ -22,7 +22,7 @@ namespace Opennlp.Tools.Ml.Model
     /// A classification model that can label an input sequence.
     /// </summary>
     /// <param name="<T>"></param>
-    public interface SequenceClassificationModel<T>
+    internal interface SequenceClassificationModel<T>
     {
         /// <summary>
         /// Finds the sequence with the highest probability.

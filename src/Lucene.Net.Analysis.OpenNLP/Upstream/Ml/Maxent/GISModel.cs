@@ -24,7 +24,7 @@ namespace Opennlp.Tools.Ml.Maxent
     /// A maximum entropy model which has been trained using the Generalized
     /// Iterative Scaling procedure (implemented in GIS.java).
     /// </summary>
-    public sealed class GISModel : AbstractModel
+    internal sealed class GISModel : AbstractModel
     {
         /// <summary>
         /// Creates a new model with the specified parameters, outcome names, and
@@ -103,7 +103,9 @@ namespace Opennlp.Tools.Ml.Maxent
             Context[] scontexts = new Context[context.Length];
             for (int i = 0; i < context.Length; i++)
             {
-                scontexts[i] = pmap[context[i]];
+                // LUCENENET: Java's Map.get() returns null for an absent key; the .NET indexer throws.
+                pmap.TryGetValue(context[i], out Context ctx);
+                scontexts[i] = ctx;
             }
 
             prior.LogPrior(outsums, scontexts, values);

@@ -21,7 +21,7 @@ using System.Collections.Generic;
 namespace Opennlp.Tools.Util.Featuregen
 {
     [Obsolete("Obsolete")]
-    public abstract class CustomFeatureGenerator : AdaptiveFeatureGenerator
+    internal abstract class CustomFeatureGenerator : AdaptiveFeatureGenerator
     {
         /// <summary>
         /// Initialized the Custom Feature Generator with defined properties and loaded resources.
@@ -31,5 +31,16 @@ namespace Opennlp.Tools.Util.Featuregen
         public abstract void Init(IDictionary<string, string> properties, FeatureGeneratorResourceProvider resourceProvider);
 
         public abstract void CreateFeatures(IList<string> features, string[] tokens, int index, string[] previousOutcomes);
+
+        // LUCENENET: AdaptiveFeatureGenerator declares these as Java 8 default
+        // methods; C# default interface implementations are unavailable on
+        // netstandard2.0/net462, so the empty bodies are supplied here.
+        public virtual void UpdateAdaptiveData(string[] tokens, string[] outcomes)
+        {
+        }
+
+        public virtual void ClearAdaptiveData()
+        {
+        }
     }
 }

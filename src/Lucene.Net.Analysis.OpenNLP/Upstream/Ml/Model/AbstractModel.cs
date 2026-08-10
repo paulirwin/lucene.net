@@ -21,7 +21,7 @@ using Lucene.Net.Support;
 
 namespace Opennlp.Tools.Ml.Model
 {
-    public abstract class AbstractModel : MaxentModel
+    internal abstract class AbstractModel : MaxentModel
     {
         /// <summary>
         /// Mapping between predicates/contexts and an integer representing them.
@@ -39,7 +39,7 @@ namespace Opennlp.Tools.Ml.Model
         /// Prior distribution for this model.
         /// </summary>
         protected Prior prior;
-        public enum ModelType
+        internal enum ModelType
         {
             Maxent,
             Perceptron,

@@ -22,7 +22,7 @@ namespace Opennlp.Tools.Lemmatizer
     /// <summary>
     /// The interface for lemmatizers.
     /// </summary>
-    public interface Lemmatizer
+    internal interface Lemmatizer
     {
         /// <summary>
         /// Generates lemmas for the word and postag returning the result in an array.

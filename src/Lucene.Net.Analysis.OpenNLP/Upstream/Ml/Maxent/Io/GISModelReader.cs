@@ -24,7 +24,7 @@ namespace Opennlp.Tools.Ml.Maxent.Io
     /// <summary>
     /// Abstract parent class for readers of GISModels.
     /// </summary>
-    public class GISModelReader : AbstractModelReader
+    internal class GISModelReader : AbstractModelReader
     {
         public GISModelReader(FileInfo file) : base(file)
         {

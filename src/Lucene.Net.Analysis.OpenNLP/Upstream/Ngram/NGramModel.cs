@@ -26,7 +26,7 @@ namespace Opennlp.Tools.Ngram
     /// The {@link NGramModel} can be used to crate ngrams and character ngrams.
     /// </summary>
     /// <remarks>@seeStringList</remarks>
-    public class NGramModel : IEnumerable<StringList>
+    internal class NGramModel : IEnumerable<StringList>
     {
         protected static readonly string COUNT = "count";
         private Dictionary<StringList, int> mNGrams = new Dictionary<StringList, int>();
@@ -58,7 +58,7 @@ namespace Opennlp.Tools.Ngram
 
         //            count = int.Parse(countValueString);
         //        }
-        //        catch (FormatException e)
+        //        catch (System.FormatException e)
         //        {
         //            throw new InvalidFormatException("The count attribute '" + countValueString + "' must be a number!", e);
         //        }

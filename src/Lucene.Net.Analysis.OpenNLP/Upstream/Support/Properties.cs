@@ -1,4 +1,5 @@
 #nullable enable
+using System;
 using System.IO;
 using J2N.Collections.Generic;
 
@@ -30,7 +31,8 @@ internal class Properties : Dictionary<object, object>
         while (reader.ReadLine() is { } line)
         {
             line = line.Trim();
-            if (line.Length == 0 || line.StartsWith('#'))
+            if (line.Length == 0 || // LUCENENET: string.StartsWith(char) is net5.0+.
+                line.StartsWith("#", StringComparison.Ordinal))
                 continue;
 
             int separatorIndex = line.IndexOf('=');

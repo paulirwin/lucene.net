@@ -20,7 +20,7 @@ using Lucene.Net.Support;
 
 namespace Opennlp.Tools.Util
 {
-    public class TokenTag
+    internal class TokenTag
     {
         private readonly string token;
         private readonly string tag;

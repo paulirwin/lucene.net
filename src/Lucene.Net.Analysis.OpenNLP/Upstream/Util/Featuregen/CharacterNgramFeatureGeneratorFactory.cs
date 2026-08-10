@@ -25,7 +25,7 @@ namespace Opennlp.Tools.Util.Featuregen
     /// <summary>
     /// </summary>
     /// <remarks>@seeCharacterNgramFeatureGenerator</remarks>
-    public class CharacterNgramFeatureGeneratorFactory : GeneratorFactory.AbstractXmlFeatureGeneratorFactory, GeneratorFactory.XmlFeatureGeneratorFactory
+    internal class CharacterNgramFeatureGeneratorFactory : GeneratorFactory.AbstractXmlFeatureGeneratorFactory, GeneratorFactory.XmlFeatureGeneratorFactory
     {
         public CharacterNgramFeatureGeneratorFactory() : base()
         {
@@ -39,7 +39,7 @@ namespace Opennlp.Tools.Util.Featuregen
             {
                 min = int.Parse(minString);
             }
-            catch (NumberFormatException e)
+            catch (System.FormatException e)
             {
                 throw new InvalidFormatException("min attribute '" + minString + "' is not a number!", e);
             }
@@ -50,7 +50,7 @@ namespace Opennlp.Tools.Util.Featuregen
             {
                 max = int.Parse(maxString);
             }
-            catch (NumberFormatException e)
+            catch (System.FormatException e)
             {
                 throw new InvalidFormatException("max attribute '" + maxString + "' is not a number!", e);
             }

@@ -24,7 +24,7 @@ namespace Opennlp.Tools.Ml.Naivebayes
     /// <summary>
     /// Abstract parent class for readers of NaiveBayes.
     /// </summary>
-    public class NaiveBayesModelReader : AbstractModelReader
+    internal class NaiveBayesModelReader : AbstractModelReader
     {
         public NaiveBayesModelReader(FileInfo file) : base(file)
         {

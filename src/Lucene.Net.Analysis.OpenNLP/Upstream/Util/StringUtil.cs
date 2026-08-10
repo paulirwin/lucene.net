@@ -21,7 +21,7 @@ using J2N.Text;
 
 namespace Opennlp.Tools.Util
 {
-    public class StringUtil
+    internal class StringUtil
     {
         /// <summary>
         /// Determines if the specified character is a whitespace.
