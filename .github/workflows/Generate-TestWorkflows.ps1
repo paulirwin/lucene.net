@@ -108,7 +108,7 @@ param(
 #   Lucene.Net.Tests.Cli                           - reduced matrix, plus an extra dotnet pack step
 #   Lucene.Net.Tests.CodeAnalysis                  - net8.0 only
 #   Lucene.Net.Tests.Analysis.OpenNLP              - excludes net472
-[hashtable]$TestProjectGroups = [ordered]@{
+$TestProjectGroups = [ordered]@{
     'Lucene.Net.Tests.Analysis' = @(
         'Lucene.Net.Tests.Analysis.Kuromoji',
         'Lucene.Net.Tests.Analysis.Morfologik',
@@ -281,6 +281,12 @@ function Write-TestWorkflow(
     # Trim the trailing newline; the template supplies the line break that follows.
     $projectPathFilters = $projectPathFilters.TrimEnd([System.Environment]::NewLine.ToCharArray())
 
+    # Without this, a job inherits the GitHub default of 360 minutes. A grouped job runs its
+    # projects one after another, so a hang can cost 20 minutes (the --blame-hang-timeout)
+    # per project before the job gives up. Budget 30 minutes per project, which leaves ample
+    # headroom over the slowest observed run while still capping a stuck job.
+    [int]$timeoutMinutes = 30 * $projectRelativePaths.Count
+
     [bool]$isCLI = if ($projectNames -contains "Lucene.Net.Tests.Cli") { $true } else { $false }        # Special case
     $luceneCliProjectPath = $projectRelativePaths[0] -replace "Lucene.Net.Tests.Cli", "lucene-cli"      # Special case
 
@@ -340,6 +346,7 @@ jobs:
 
   Test:
     runs-on: `${{ matrix.os }}
+    timeout-minutes: $timeoutMinutes
     strategy:
       fail-fast: false
       matrix:
@@ -467,16 +474,21 @@ jobs:
       - run: dotnet test `"`${{env.project_path}}`" --configuration `"`${{matrix.configuration}}`" --framework `"`${{matrix.framework}}`" --no-build --no-restore --blame-hang --blame-hang-dump-type mini --blame-hang-timeout 20minutes --logger:`"console;verbosity=normal`" --logger:`"trx;LogFileName=`${{env.trx_file_name}}`" --logger:`"liquid.md;LogFileName=`${{env.md_file_name}};Title=`${{env.title}};`" --results-directory:`"`${{github.workspace}}/`${{env.test_results_artifact_name}}/`${{env.project_name}}`" -- RunConfiguration.TargetPlatform=`${{matrix.platform}} NUnit.DisplayName=FullName TestRunParameters.Parameter\(name=\`"tests:slow\`",\ value=\`"\`${{env.run_slow_tests}}\`"\)
         shell: bash"
     } else {
-        # Each project in the group gets its own build and test step. The test steps use
-        # always() so that a failure in one project still runs and reports the rest, which
-        # keeps a grouped workflow as informative as the separate workflows it replaces.
-        # Results go into a per-project subdirectory of the shared artifact, matching the
-        # layout the single-project workflows produce.
-        # The first build step runs unconditionally; every later step uses always() so that a
-        # failing project does not skip the projects that follow it.
+        # Each project in the group gets its own build and test step. Results go into a
+        # per-project subdirectory of the shared artifact, matching the layout the
+        # single-project workflows produce.
+        #
+        # Every step after the first uses always(), so that a failure in one project still
+        # builds and tests the projects after it; a grouped workflow stays as informative as
+        # the separate workflows it replaces. Each test step additionally requires its own
+        # build to have succeeded: running 'dotnet test --no-build' after a failed compile
+        # reports a missing or stale test assembly rather than the build error, which buries
+        # the real cause. The job still fails, because the build step itself failed.
         for ($i = 0; $i -lt $projectRelativePaths.Count; $i++) {
             $currentRelativePath = $projectRelativePaths[$i]
             $currentName = $projectNames[$i]
+            # Step ids may only contain alphanumerics, '-' and '_'.
+            $buildStepId = 'build_' + ($currentName -replace '[^A-Za-z0-9_]', '_')
             $buildStepCondition = if ($i -eq 0) { '' } else { "
         if: `${{always()}}" }
 
@@ -484,12 +496,13 @@ jobs:
 
       # $currentName
       - name: Build $currentName
+        id: $buildStepId
         run: dotnet build `"$currentRelativePath`" --configuration `"`${{matrix.configuration}}`" --framework `"`${{matrix.framework}}`" --no-restore -p:TestFrameworks=`${{ env.BUILD_FOR_ALL_TEST_TARGET_FRAMEWORKS }}
         shell: bash$buildStepCondition
       - name: Test $currentName
         run: dotnet test `"$currentRelativePath`" --configuration `"`${{matrix.configuration}}`" --framework `"`${{matrix.framework}}`" --no-build --no-restore --blame-hang --blame-hang-dump-type mini --blame-hang-timeout 20minutes --logger:`"console;verbosity=normal`" --logger:`"trx;LogFileName=`${{env.trx_file_name}}`" --logger:`"liquid.md;LogFileName=`${{env.md_file_name}};Title=Test Results for $currentName - `${{matrix.framework}} - `${{matrix.platform}} - `${{matrix.os}};`" --results-directory:`"`${{github.workspace}}/`${{env.test_results_artifact_name}}/$currentName`" -- RunConfiguration.TargetPlatform=`${{matrix.platform}} NUnit.DisplayName=FullName TestRunParameters.Parameter\(name=\`"tests:slow\`",\ value=\`"\`${{env.run_slow_tests}}\`"\)
         shell: bash
-        if: `${{always()}}"
+        if: `${{always() && steps.$buildStepId.outcome == 'success'}}"
         }
     }
 
@@ -557,7 +570,7 @@ try {
 
 # Returns the name of the workflow that the given project belongs to, or $null if the project
 # is not grouped and should get a workflow file of its own.
-function Get-TestProjectGroup([string]$ProjectName, [hashtable]$Groups) {
+function Get-TestProjectGroup([string]$ProjectName, [System.Collections.Specialized.OrderedDictionary]$Groups) {
     foreach ($groupName in $Groups.Keys) {
         if ($Groups[$groupName] -contains $ProjectName) {
             return $groupName
@@ -583,7 +596,9 @@ foreach ($testProject in $TestProjects) {
     }
 
     [string[]]$frameworks = $frameworksString -split '\s*;\s*'
-    $frameworks = $frameworks | ? { $TestFrameworks -contains $_ } # IntersectWith
+    # @(...) keeps this an array when only one framework matches, so that the Count check
+    # below and the group comparison further down behave the same for one or many.
+    $frameworks = @($frameworks | ? { $TestFrameworks -contains $_ }) # IntersectWith
 
     if ($frameworks.Count -eq 0) {
         Write-Host "WARNING: ${projectName} contains no matching target frameworks: $frameworksString" -ForegroundColor Yellow
@@ -601,9 +616,12 @@ foreach ($testProject in $TestProjects) {
         $workflowFrameworks[$workflowName] = $frameworks
     } elseif (@(Compare-Object $workflowFrameworks[$workflowName] $frameworks).Count -ne 0) {
         # All projects sharing a workflow share a single build matrix, so differing frameworks
-        # would silently drop coverage. Narrow to the intersection and warn.
-        Write-Host "WARNING: ${projectName} targets '$($frameworks -join ';')', which differs from the other projects in workflow '${workflowName}' ('$($workflowFrameworks[$workflowName] -join ';')'). Using the intersection; consider giving this project its own workflow." -ForegroundColor Yellow
-        $workflowFrameworks[$workflowName] = @($workflowFrameworks[$workflowName] | ? { $frameworks -contains $_ })
+        # would silently drop coverage. Narrow to the intersection and warn, naming the
+        # frameworks that are lost: the generated matrix alone does not say why it shrank.
+        $narrowed = @($workflowFrameworks[$workflowName] | ? { $frameworks -contains $_ })
+        $dropped = @(@($workflowFrameworks[$workflowName] + $frameworks | Select-Object -Unique) | ? { $narrowed -notcontains $_ })
+        Write-Host "WARNING: ${projectName} targets '$($frameworks -join ';')', which differs from the other projects in workflow '${workflowName}' ('$($workflowFrameworks[$workflowName] -join ';')'). Narrowing to '$($narrowed -join ';')', which DROPS COVERAGE for '$($dropped -join ';')'. Give this project its own workflow to keep testing those frameworks." -ForegroundColor Yellow
+        $workflowFrameworks[$workflowName] = $narrowed
     }
 
     $workflowProjects[$workflowName].Add($testProject)
