@@ -61,6 +61,10 @@ jobs:
 
   Test:
     runs-on: ${{ matrix.os }}
+    # Without this, a job inherits the GitHub default of 360 minutes. The slowest job
+    # observed takes well under 30 minutes, grouped ones included, so this is a cap on a
+    # stuck job rather than a budget to run within.
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -128,42 +132,46 @@ jobs:
 
       # Lucene.Net.Tests.Expressions
       - name: Build Lucene.Net.Tests.Expressions
+        id: build_Lucene_Net_Tests_Expressions
         run: dotnet build "./src/Lucene.Net.Tests.Expressions/Lucene.Net.Tests.Expressions.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-restore -p:TestFrameworks=${{ env.BUILD_FOR_ALL_TEST_TARGET_FRAMEWORKS }}
         shell: bash
       - name: Test Lucene.Net.Tests.Expressions
         run: dotnet test "./src/Lucene.Net.Tests.Expressions/Lucene.Net.Tests.Expressions.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-build --no-restore --blame-hang --blame-hang-dump-type mini --blame-hang-timeout 20minutes --logger:"console;verbosity=normal" --logger:"trx;LogFileName=${{env.trx_file_name}}" --logger:"liquid.md;LogFileName=${{env.md_file_name}};Title=Test Results for Lucene.Net.Tests.Expressions - ${{matrix.framework}} - ${{matrix.platform}} - ${{matrix.os}};" --results-directory:"${{github.workspace}}/${{env.test_results_artifact_name}}/Lucene.Net.Tests.Expressions" -- RunConfiguration.TargetPlatform=${{matrix.platform}} NUnit.DisplayName=FullName TestRunParameters.Parameter\(name=\"tests:slow\",\ value=\"\${{env.run_slow_tests}}\"\)
         shell: bash
-        if: ${{always()}}
+        if: ${{always() && steps.build_Lucene_Net_Tests_Expressions.outcome == 'success'}}
 
       # Lucene.Net.Tests.Queries
       - name: Build Lucene.Net.Tests.Queries
+        id: build_Lucene_Net_Tests_Queries
         run: dotnet build "./src/Lucene.Net.Tests.Queries/Lucene.Net.Tests.Queries.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-restore -p:TestFrameworks=${{ env.BUILD_FOR_ALL_TEST_TARGET_FRAMEWORKS }}
         shell: bash
         if: ${{always()}}
       - name: Test Lucene.Net.Tests.Queries
         run: dotnet test "./src/Lucene.Net.Tests.Queries/Lucene.Net.Tests.Queries.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-build --no-restore --blame-hang --blame-hang-dump-type mini --blame-hang-timeout 20minutes --logger:"console;verbosity=normal" --logger:"trx;LogFileName=${{env.trx_file_name}}" --logger:"liquid.md;LogFileName=${{env.md_file_name}};Title=Test Results for Lucene.Net.Tests.Queries - ${{matrix.framework}} - ${{matrix.platform}} - ${{matrix.os}};" --results-directory:"${{github.workspace}}/${{env.test_results_artifact_name}}/Lucene.Net.Tests.Queries" -- RunConfiguration.TargetPlatform=${{matrix.platform}} NUnit.DisplayName=FullName TestRunParameters.Parameter\(name=\"tests:slow\",\ value=\"\${{env.run_slow_tests}}\"\)
         shell: bash
-        if: ${{always()}}
+        if: ${{always() && steps.build_Lucene_Net_Tests_Queries.outcome == 'success'}}
 
       # Lucene.Net.Tests.QueryParser
       - name: Build Lucene.Net.Tests.QueryParser
+        id: build_Lucene_Net_Tests_QueryParser
         run: dotnet build "./src/Lucene.Net.Tests.QueryParser/Lucene.Net.Tests.QueryParser.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-restore -p:TestFrameworks=${{ env.BUILD_FOR_ALL_TEST_TARGET_FRAMEWORKS }}
         shell: bash
         if: ${{always()}}
       - name: Test Lucene.Net.Tests.QueryParser
         run: dotnet test "./src/Lucene.Net.Tests.QueryParser/Lucene.Net.Tests.QueryParser.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-build --no-restore --blame-hang --blame-hang-dump-type mini --blame-hang-timeout 20minutes --logger:"console;verbosity=normal" --logger:"trx;LogFileName=${{env.trx_file_name}}" --logger:"liquid.md;LogFileName=${{env.md_file_name}};Title=Test Results for Lucene.Net.Tests.QueryParser - ${{matrix.framework}} - ${{matrix.platform}} - ${{matrix.os}};" --results-directory:"${{github.workspace}}/${{env.test_results_artifact_name}}/Lucene.Net.Tests.QueryParser" -- RunConfiguration.TargetPlatform=${{matrix.platform}} NUnit.DisplayName=FullName TestRunParameters.Parameter\(name=\"tests:slow\",\ value=\"\${{env.run_slow_tests}}\"\)
         shell: bash
-        if: ${{always()}}
+        if: ${{always() && steps.build_Lucene_Net_Tests_QueryParser.outcome == 'success'}}
 
       # Lucene.Net.Tests.Sandbox
       - name: Build Lucene.Net.Tests.Sandbox
+        id: build_Lucene_Net_Tests_Sandbox
         run: dotnet build "./src/Lucene.Net.Tests.Sandbox/Lucene.Net.Tests.Sandbox.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-restore -p:TestFrameworks=${{ env.BUILD_FOR_ALL_TEST_TARGET_FRAMEWORKS }}
         shell: bash
         if: ${{always()}}
       - name: Test Lucene.Net.Tests.Sandbox
         run: dotnet test "./src/Lucene.Net.Tests.Sandbox/Lucene.Net.Tests.Sandbox.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-build --no-restore --blame-hang --blame-hang-dump-type mini --blame-hang-timeout 20minutes --logger:"console;verbosity=normal" --logger:"trx;LogFileName=${{env.trx_file_name}}" --logger:"liquid.md;LogFileName=${{env.md_file_name}};Title=Test Results for Lucene.Net.Tests.Sandbox - ${{matrix.framework}} - ${{matrix.platform}} - ${{matrix.os}};" --results-directory:"${{github.workspace}}/${{env.test_results_artifact_name}}/Lucene.Net.Tests.Sandbox" -- RunConfiguration.TargetPlatform=${{matrix.platform}} NUnit.DisplayName=FullName TestRunParameters.Parameter\(name=\"tests:slow\",\ value=\"\${{env.run_slow_tests}}\"\)
         shell: bash
-        if: ${{always()}}
+        if: ${{always() && steps.build_Lucene_Net_Tests_Sandbox.outcome == 'success'}}
       # upload reports as build artifacts
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

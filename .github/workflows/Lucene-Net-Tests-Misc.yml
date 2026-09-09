@@ -90,6 +90,10 @@ jobs:
 
   Test:
     runs-on: ${{ matrix.os }}
+    # Without this, a job inherits the GitHub default of 360 minutes. The slowest job
+    # observed takes well under 30 minutes, grouped ones included, so this is a cap on a
+    # stuck job rather than a budget to run within.
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -157,82 +161,90 @@ jobs:
 
       # Lucene.Net.Tests.AllProjects
       - name: Build Lucene.Net.Tests.AllProjects
+        id: build_Lucene_Net_Tests_AllProjects
         run: dotnet build "./src/Lucene.Net.Tests.AllProjects/Lucene.Net.Tests.AllProjects.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-restore -p:TestFrameworks=${{ env.BUILD_FOR_ALL_TEST_TARGET_FRAMEWORKS }}
         shell: bash
       - name: Test Lucene.Net.Tests.AllProjects
         run: dotnet test "./src/Lucene.Net.Tests.AllProjects/Lucene.Net.Tests.AllProjects.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-build --no-restore --blame-hang --blame-hang-dump-type mini --blame-hang-timeout 20minutes --logger:"console;verbosity=normal" --logger:"trx;LogFileName=${{env.trx_file_name}}" --logger:"liquid.md;LogFileName=${{env.md_file_name}};Title=Test Results for Lucene.Net.Tests.AllProjects - ${{matrix.framework}} - ${{matrix.platform}} - ${{matrix.os}};" --results-directory:"${{github.workspace}}/${{env.test_results_artifact_name}}/Lucene.Net.Tests.AllProjects" -- RunConfiguration.TargetPlatform=${{matrix.platform}} NUnit.DisplayName=FullName TestRunParameters.Parameter\(name=\"tests:slow\",\ value=\"\${{env.run_slow_tests}}\"\)
         shell: bash
-        if: ${{always()}}
+        if: ${{always() && steps.build_Lucene_Net_Tests_AllProjects.outcome == 'success'}}
 
       # Lucene.Net.Tests.Benchmark
       - name: Build Lucene.Net.Tests.Benchmark
+        id: build_Lucene_Net_Tests_Benchmark
         run: dotnet build "./src/Lucene.Net.Tests.Benchmark/Lucene.Net.Tests.Benchmark.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-restore -p:TestFrameworks=${{ env.BUILD_FOR_ALL_TEST_TARGET_FRAMEWORKS }}
         shell: bash
         if: ${{always()}}
       - name: Test Lucene.Net.Tests.Benchmark
         run: dotnet test "./src/Lucene.Net.Tests.Benchmark/Lucene.Net.Tests.Benchmark.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-build --no-restore --blame-hang --blame-hang-dump-type mini --blame-hang-timeout 20minutes --logger:"console;verbosity=normal" --logger:"trx;LogFileName=${{env.trx_file_name}}" --logger:"liquid.md;LogFileName=${{env.md_file_name}};Title=Test Results for Lucene.Net.Tests.Benchmark - ${{matrix.framework}} - ${{matrix.platform}} - ${{matrix.os}};" --results-directory:"${{github.workspace}}/${{env.test_results_artifact_name}}/Lucene.Net.Tests.Benchmark" -- RunConfiguration.TargetPlatform=${{matrix.platform}} NUnit.DisplayName=FullName TestRunParameters.Parameter\(name=\"tests:slow\",\ value=\"\${{env.run_slow_tests}}\"\)
         shell: bash
-        if: ${{always()}}
+        if: ${{always() && steps.build_Lucene_Net_Tests_Benchmark.outcome == 'success'}}
 
       # Lucene.Net.Tests.Classification
       - name: Build Lucene.Net.Tests.Classification
+        id: build_Lucene_Net_Tests_Classification
         run: dotnet build "./src/Lucene.Net.Tests.Classification/Lucene.Net.Tests.Classification.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-restore -p:TestFrameworks=${{ env.BUILD_FOR_ALL_TEST_TARGET_FRAMEWORKS }}
         shell: bash
         if: ${{always()}}
       - name: Test Lucene.Net.Tests.Classification
         run: dotnet test "./src/Lucene.Net.Tests.Classification/Lucene.Net.Tests.Classification.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-build --no-restore --blame-hang --blame-hang-dump-type mini --blame-hang-timeout 20minutes --logger:"console;verbosity=normal" --logger:"trx;LogFileName=${{env.trx_file_name}}" --logger:"liquid.md;LogFileName=${{env.md_file_name}};Title=Test Results for Lucene.Net.Tests.Classification - ${{matrix.framework}} - ${{matrix.platform}} - ${{matrix.os}};" --results-directory:"${{github.workspace}}/${{env.test_results_artifact_name}}/Lucene.Net.Tests.Classification" -- RunConfiguration.TargetPlatform=${{matrix.platform}} NUnit.DisplayName=FullName TestRunParameters.Parameter\(name=\"tests:slow\",\ value=\"\${{env.run_slow_tests}}\"\)
         shell: bash
-        if: ${{always()}}
+        if: ${{always() && steps.build_Lucene_Net_Tests_Classification.outcome == 'success'}}
 
       # Lucene.Net.Tests.Codecs
       - name: Build Lucene.Net.Tests.Codecs
+        id: build_Lucene_Net_Tests_Codecs
         run: dotnet build "./src/Lucene.Net.Tests.Codecs/Lucene.Net.Tests.Codecs.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-restore -p:TestFrameworks=${{ env.BUILD_FOR_ALL_TEST_TARGET_FRAMEWORKS }}
         shell: bash
         if: ${{always()}}
       - name: Test Lucene.Net.Tests.Codecs
         run: dotnet test "./src/Lucene.Net.Tests.Codecs/Lucene.Net.Tests.Codecs.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-build --no-restore --blame-hang --blame-hang-dump-type mini --blame-hang-timeout 20minutes --logger:"console;verbosity=normal" --logger:"trx;LogFileName=${{env.trx_file_name}}" --logger:"liquid.md;LogFileName=${{env.md_file_name}};Title=Test Results for Lucene.Net.Tests.Codecs - ${{matrix.framework}} - ${{matrix.platform}} - ${{matrix.os}};" --results-directory:"${{github.workspace}}/${{env.test_results_artifact_name}}/Lucene.Net.Tests.Codecs" -- RunConfiguration.TargetPlatform=${{matrix.platform}} NUnit.DisplayName=FullName TestRunParameters.Parameter\(name=\"tests:slow\",\ value=\"\${{env.run_slow_tests}}\"\)
         shell: bash
-        if: ${{always()}}
+        if: ${{always() && steps.build_Lucene_Net_Tests_Codecs.outcome == 'success'}}
 
       # Lucene.Net.Tests.Demo
       - name: Build Lucene.Net.Tests.Demo
+        id: build_Lucene_Net_Tests_Demo
         run: dotnet build "./src/Lucene.Net.Tests.Demo/Lucene.Net.Tests.Demo.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-restore -p:TestFrameworks=${{ env.BUILD_FOR_ALL_TEST_TARGET_FRAMEWORKS }}
         shell: bash
         if: ${{always()}}
       - name: Test Lucene.Net.Tests.Demo
         run: dotnet test "./src/Lucene.Net.Tests.Demo/Lucene.Net.Tests.Demo.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-build --no-restore --blame-hang --blame-hang-dump-type mini --blame-hang-timeout 20minutes --logger:"console;verbosity=normal" --logger:"trx;LogFileName=${{env.trx_file_name}}" --logger:"liquid.md;LogFileName=${{env.md_file_name}};Title=Test Results for Lucene.Net.Tests.Demo - ${{matrix.framework}} - ${{matrix.platform}} - ${{matrix.os}};" --results-directory:"${{github.workspace}}/${{env.test_results_artifact_name}}/Lucene.Net.Tests.Demo" -- RunConfiguration.TargetPlatform=${{matrix.platform}} NUnit.DisplayName=FullName TestRunParameters.Parameter\(name=\"tests:slow\",\ value=\"\${{env.run_slow_tests}}\"\)
         shell: bash
-        if: ${{always()}}
+        if: ${{always() && steps.build_Lucene_Net_Tests_Demo.outcome == 'success'}}
 
       # Lucene.Net.Tests.Memory
       - name: Build Lucene.Net.Tests.Memory
+        id: build_Lucene_Net_Tests_Memory
         run: dotnet build "./src/Lucene.Net.Tests.Memory/Lucene.Net.Tests.Memory.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-restore -p:TestFrameworks=${{ env.BUILD_FOR_ALL_TEST_TARGET_FRAMEWORKS }}
         shell: bash
         if: ${{always()}}
       - name: Test Lucene.Net.Tests.Memory
         run: dotnet test "./src/Lucene.Net.Tests.Memory/Lucene.Net.Tests.Memory.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-build --no-restore --blame-hang --blame-hang-dump-type mini --blame-hang-timeout 20minutes --logger:"console;verbosity=normal" --logger:"trx;LogFileName=${{env.trx_file_name}}" --logger:"liquid.md;LogFileName=${{env.md_file_name}};Title=Test Results for Lucene.Net.Tests.Memory - ${{matrix.framework}} - ${{matrix.platform}} - ${{matrix.os}};" --results-directory:"${{github.workspace}}/${{env.test_results_artifact_name}}/Lucene.Net.Tests.Memory" -- RunConfiguration.TargetPlatform=${{matrix.platform}} NUnit.DisplayName=FullName TestRunParameters.Parameter\(name=\"tests:slow\",\ value=\"\${{env.run_slow_tests}}\"\)
         shell: bash
-        if: ${{always()}}
+        if: ${{always() && steps.build_Lucene_Net_Tests_Memory.outcome == 'success'}}
 
       # Lucene.Net.Tests.Misc
       - name: Build Lucene.Net.Tests.Misc
+        id: build_Lucene_Net_Tests_Misc
         run: dotnet build "./src/Lucene.Net.Tests.Misc/Lucene.Net.Tests.Misc.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-restore -p:TestFrameworks=${{ env.BUILD_FOR_ALL_TEST_TARGET_FRAMEWORKS }}
         shell: bash
         if: ${{always()}}
       - name: Test Lucene.Net.Tests.Misc
         run: dotnet test "./src/Lucene.Net.Tests.Misc/Lucene.Net.Tests.Misc.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-build --no-restore --blame-hang --blame-hang-dump-type mini --blame-hang-timeout 20minutes --logger:"console;verbosity=normal" --logger:"trx;LogFileName=${{env.trx_file_name}}" --logger:"liquid.md;LogFileName=${{env.md_file_name}};Title=Test Results for Lucene.Net.Tests.Misc - ${{matrix.framework}} - ${{matrix.platform}} - ${{matrix.os}};" --results-directory:"${{github.workspace}}/${{env.test_results_artifact_name}}/Lucene.Net.Tests.Misc" -- RunConfiguration.TargetPlatform=${{matrix.platform}} NUnit.DisplayName=FullName TestRunParameters.Parameter\(name=\"tests:slow\",\ value=\"\${{env.run_slow_tests}}\"\)
         shell: bash
-        if: ${{always()}}
+        if: ${{always() && steps.build_Lucene_Net_Tests_Misc.outcome == 'success'}}
 
       # Lucene.Net.Tests.Replicator
       - name: Build Lucene.Net.Tests.Replicator
+        id: build_Lucene_Net_Tests_Replicator
         run: dotnet build "./src/Lucene.Net.Tests.Replicator/Lucene.Net.Tests.Replicator.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-restore -p:TestFrameworks=${{ env.BUILD_FOR_ALL_TEST_TARGET_FRAMEWORKS }}
         shell: bash
         if: ${{always()}}
       - name: Test Lucene.Net.Tests.Replicator
         run: dotnet test "./src/Lucene.Net.Tests.Replicator/Lucene.Net.Tests.Replicator.csproj" --configuration "${{matrix.configuration}}" --framework "${{matrix.framework}}" --no-build --no-restore --blame-hang --blame-hang-dump-type mini --blame-hang-timeout 20minutes --logger:"console;verbosity=normal" --logger:"trx;LogFileName=${{env.trx_file_name}}" --logger:"liquid.md;LogFileName=${{env.md_file_name}};Title=Test Results for Lucene.Net.Tests.Replicator - ${{matrix.framework}} - ${{matrix.platform}} - ${{matrix.os}};" --results-directory:"${{github.workspace}}/${{env.test_results_artifact_name}}/Lucene.Net.Tests.Replicator" -- RunConfiguration.TargetPlatform=${{matrix.platform}} NUnit.DisplayName=FullName TestRunParameters.Parameter\(name=\"tests:slow\",\ value=\"\${{env.run_slow_tests}}\"\)
         shell: bash
-        if: ${{always()}}
+        if: ${{always() && steps.build_Lucene_Net_Tests_Replicator.outcome == 'success'}}
       # upload reports as build artifacts
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
