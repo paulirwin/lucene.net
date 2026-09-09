@@ -33,7 +33,7 @@ version: 4.8.0-beta00014
     }
     ```
 
-    >    IMPORTANT: There must be at least opening and closing curly brackets in the file, or it won't be parsed as valid JSON.
+    > IMPORTANT: There must be at least opening and closing curly brackets in the file, or it won't be parsed as valid JSON.
 
 ## Benchmarks (from [#310](https://github.com/apache/lucenenet/pull/310))
 
