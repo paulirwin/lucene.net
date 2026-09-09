@@ -40,6 +40,8 @@ on:
     - 'src/Lucene.Net.Tests/Support/**/*.cs'
     - 'src/Lucene.Net.Tests/Util/TestNumericUtils.cs'
     - 'src/Lucene.Net.Tests/Store/LUCENENET521.zip'
+    - 'src/Lucene.Net.Tests/Index/index.30.cfs.zip'
+    - 'src/Lucene.Net.Tests/Index/index.31.cfs.zip'
 
     # Dependencies
     - 'src/Lucene.Net/**/*'
