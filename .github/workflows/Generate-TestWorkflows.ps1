@@ -281,12 +281,6 @@ function Write-TestWorkflow(
     # Trim the trailing newline; the template supplies the line break that follows.
     $projectPathFilters = $projectPathFilters.TrimEnd([System.Environment]::NewLine.ToCharArray())
 
-    # Without this, a job inherits the GitHub default of 360 minutes. A grouped job runs its
-    # projects one after another, so a hang can cost 20 minutes (the --blame-hang-timeout)
-    # per project before the job gives up. Budget 30 minutes per project, which leaves ample
-    # headroom over the slowest observed run while still capping a stuck job.
-    [int]$timeoutMinutes = 30 * $projectRelativePaths.Count
-
     [bool]$isCLI = if ($projectNames -contains "Lucene.Net.Tests.Cli") { $true } else { $false }        # Special case
     $luceneCliProjectPath = $projectRelativePaths[0] -replace "Lucene.Net.Tests.Cli", "lucene-cli"      # Special case
 
@@ -346,7 +340,10 @@ jobs:
 
   Test:
     runs-on: `${{ matrix.os }}
-    timeout-minutes: $timeoutMinutes
+    # Without this, a job inherits the GitHub default of 360 minutes. The slowest job
+    # observed takes well under 30 minutes, grouped ones included, so this is a cap on a
+    # stuck job rather than a budget to run within.
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
