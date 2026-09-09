@@ -297,8 +297,7 @@ faster indexing in certain cases. The change is fully backwards compatible (in
 the same way as the lock-less commits change in 2.1).
 
 * In version 2.4, Strings are now written as true UTF-8 byte sequence, not
-Java's modified UTF-8. See [
-LUCENE-510](http://issues.apache.org/jira/browse/LUCENE-510) for details.
+Java's modified UTF-8. See [LUCENE-510](http://issues.apache.org/jira/browse/LUCENE-510) for details.
 
 * In version 2.9, an optional opaque `IDictionary<string, string>` CommitUserData
 may be passed to IndexWriter's commit methods (and later retrieved), which is

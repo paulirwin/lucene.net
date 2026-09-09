@@ -93,9 +93,6 @@ MD036: false
 # MD037/no-space-in-emphasis Spaces inside emphasis markers
 MD037: false
 
-# MD039/no-space-in-links Spaces inside link text
-MD039: false
-
 # MD040/fenced-code-language Fenced code blocks should have a language specified
 MD040: false
 
